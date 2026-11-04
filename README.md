@@ -2,8 +2,8 @@
 
 Concept demo for a bike workshop parts-request flow.
 
-- **Workshop:** a mechanic picks their hook, scans part barcodes (any USB/Bluetooth scanner that types like a keyboard works) or searches by name, and sends the request.
-- **Logistics:** sees all open requests grouped per hook, urgent first, plus one combined pick list sorted by shelf location, ready to print. Requests move from *To pick* → *Ready to deliver* → *Delivered*.
+- **Workshop:** a mechanic types or picks their hook number, scans part barcodes (any USB/Bluetooth scanner that types like a keyboard works) or searches by name, and sends the request.
+- **Logistics:** sees all open requests grouped per hook, urgent first, and can print a parts list per hook. There is also one combined pick list sorted by shelf location, ready to print. Requests move from *To pick* → *Ready to deliver* → *Delivered*.
 
 Replaces: scan → Slack → Google Form → export & print → delivery.
 

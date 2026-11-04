@@ -88,10 +88,12 @@ button { cursor: pointer; }
 label.lbl { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
 
 .hookrow { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
-.hookpick { display: flex; align-items: center; gap: 0; border: 2px solid var(--ink); border-radius: 8px; overflow: hidden; }
-.hookpick button { background: var(--sunk); border: 0; width: 40px; height: 48px; font-size: 22px; font-weight: 600; }
-.hookpick output { min-width: 70px; text-align: center; font-family: var(--display); font-size: 30px; font-weight: 700; line-height: 48px; padding: 0 6px; }
-.hookpick output small { font-size: 14px; color: var(--muted); margin-right: 4px; letter-spacing: .06em; }
+.hookpick { display: flex; align-items: center; border: 2px solid var(--ink); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.hookpick:focus-within { border-color: var(--signal); box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal) 35%, transparent); }
+.hookpre { background: var(--ink); color: var(--bg); font-family: var(--display); font-size: 18px; letter-spacing: .06em; text-transform: uppercase; padding: 0 12px; line-height: 52px; }
+.hookin { width: 110px; height: 52px; border: 0; background: transparent; font-family: var(--display); font-size: 32px; font-weight: 700; padding: 0 12px; }
+.hookin:focus { outline: none; }
+.hint { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; }
 
 .scanbox { position: relative; }
 .scan { width: 100%; height: 56px; border: 2px solid var(--ink); border-radius: 8px; background: var(--surface); padding: 0 14px 0 46px; font-size: 18px; }
@@ -236,12 +238,13 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; paddi
         <p class="sub">Pick your hook, scan the barcode on each part you need, send.</p>
         <div class="hookrow">
           <div>
-            <label class="lbl" for="hook-out">Your hook</label>
+            <label class="lbl" for="hook-in">Your hook number</label>
             <div class="hookpick">
-              <button type="button" id="hook-dec" aria-label="Previous hook">−</button>
-              <output id="hook-out"><small>Hook</small>7</output>
-              <button type="button" id="hook-inc" aria-label="Next hook">+</button>
+              <span class="hookpre">Hook</span>
+              <input id="hook-in" class="hookin" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" list="hook-list" autocomplete="off" value="7" aria-describedby="hook-hint">
+              <datalist id="hook-list"></datalist>
             </div>
+            <small id="hook-hint" class="hint">Type your number or pick from the list.</small>
           </div>
         </div>
         <div>
@@ -436,7 +439,7 @@ async function connect() {
 
 /* ---------- UI state ---------- */
 const ui = {
-  hook: Math.min(MAX_HOOK, Math.max(1, Number(ls.get("hookrun.hook", 7)) || 7)),
+  hook: Math.min(999, Math.max(1, Number(ls.get("hookrun.hook", 7)) || 7)),
   basket: [],
   lview: ls.get("hookrun.lview", "hooks"),
   status: "open",
@@ -457,13 +460,20 @@ function route() {
 window.addEventListener("hashchange", route);
 
 /* ---------- workshop ---------- */
-function setHook(n) {
-  ui.hook = Math.min(MAX_HOOK, Math.max(1, n));
+$("hook-list").innerHTML = Array.from({ length: MAX_HOOK }, (_, i) => `<option value="${i + 1}">Hook ${i + 1}</option>`).join("");
+$("hook-in").value = ui.hook;
+function readHook() {
+  const inp = $("hook-in");
+  const n = parseInt(inp.value.replace(/\D/g, ""), 10);
+  if (!n || n < 1) { $("hook-hint").textContent = "Enter your hook number to send a request."; $("hook-hint").style.color = "var(--urgent)"; ui.hook = null; renderWorkshop(); return; }
+  $("hook-hint").textContent = "Type your number or pick from the list."; $("hook-hint").style.color = "";
+  ui.hook = Math.min(999, n);
   ls.set("hookrun.hook", ui.hook);
   renderWorkshop();
 }
-$("hook-dec").onclick = () => setHook(ui.hook - 1);
-$("hook-inc").onclick = () => setHook(ui.hook + 1);
+$("hook-in").addEventListener("input", readHook);
+$("hook-in").addEventListener("change", readHook);
+$("hook-in").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); $("scan").focus(); } });
 
 function addPart(p, how) {
   const line = ui.basket.find(l => l.sku === p.sku);
@@ -537,7 +547,7 @@ function renderBasket() {
   }
   const total = ui.basket.reduce((s, l) => s + l.qty, 0);
   const send = $("send");
-  send.disabled = !ui.basket.length || store.mode === "connecting";
+  send.disabled = !ui.basket.length || !ui.hook || store.mode === "connecting";
   send.textContent = total ? `Send ${total} part${total > 1 ? "s" : ""} to logistics` : "Send to logistics";
 }
 $("basket").addEventListener("click", e => {
@@ -549,7 +559,7 @@ $("basket").addEventListener("click", e => {
 });
 
 $("send").onclick = async () => {
-  if (!ui.basket.length) return;
+  if (!ui.basket.length || !ui.hook) return;
   const req = { hook: ui.hook, items: ui.basket.map(l => ({ ...l })), urgent: $("urgent").checked, note: $("note").value.trim().slice(0, 300), status: "open", createdAt: Date.now() };
   const n = req.items.reduce((s, l) => s + l.qty, 0);
   $("send").disabled = true;
@@ -565,9 +575,9 @@ $("send").onclick = async () => {
 };
 
 function renderWorkshop() {
-  $("hook-out").innerHTML = `<small>Hook</small>${ui.hook}`;
-  $("mine-title").textContent = `Hook ${ui.hook} requests`;
   renderBasket();
+  if (!ui.hook) { $("mine-title").textContent = "Your hook's requests"; $("mine").innerHTML = `<div class="empty">Enter your hook number to see your requests.</div>`; return; }
+  $("mine-title").textContent = `Hook ${ui.hook} requests`;
   const mine = store.requests.filter(r => r.hook === ui.hook).sort((a, b) => b.createdAt - a.createdAt).slice(0, 8);
   $("mine").innerHTML = mine.length ? mine.map(r => `
     <article class="req">
@@ -675,8 +685,9 @@ function renderLogistics() {
       </div>
       <table class="lines"><tbody>${g.items.map(l => `<tr><td class="s mono">${esc(l.bin || "")}</td><td>${esc(l.name)}<div class="s mono">${l.sku}</div></td><td class="q">× ${l.qty}</td></tr>`).join("")}</tbody></table>
       ${g.rs.filter(r => r.note).map(r => `<p class="note">“${esc(r.note)}”</p>`).join("")}
-      ${action ? `<div class="hookfoot"><button type="button" class="btn ${ui.status === "open" ? "dark" : "primary"} small" data-act="${g.hook}">${action[0]}</button></div>` : ""}
+      <div class="hookfoot"><button type="button" class="btn ghost small" data-print="${g.hook}" aria-label="Print parts list for Hook ${g.hook}">Print list</button>${action ? `<button type="button" class="btn ${ui.status === "open" ? "dark" : "primary"} small" data-act="${g.hook}">${action[0]}</button>` : ""}</div>
     </article>`).join("") + `</div>`;
+  el.querySelectorAll("[data-print]").forEach(b => b.onclick = () => printHook(groups.find(g => g.hook === +b.dataset.print)));
   el.querySelectorAll("[data-act]").forEach(b => b.onclick = async () => {
     const hook = +b.dataset.act, now = Date.now(); b.disabled = true;
     const rs = all.filter(r => r.hook === hook && r.status === ui.status);
@@ -703,6 +714,38 @@ async function downloadPickList(lines, open) {
   <table><thead><tr><th></th><th>Shelf</th><th>SKU</th><th>Part</th><th style="text-align:right">Qty</th><th>Deliver to</th></tr></thead><tbody>${rows}</tbody></table>
   <h2>Delivery slips per hook</h2><div class="grid">${perHook}</div></body></html>`;
   const fname = `pick-list-${when.toISOString().slice(0, 16).replace(/[T:]/g, "-")}.html`;
+  const text = lines.map(l => `${l.bin}\t${l.sku}\t${l.qty}x\t${l.name}\t${[...l.hooks.keys()].map(h => "Hook " + h).join(", ")}`).join("\n");
+  return outputPrintable(html, fname, text);
+}
+
+/* One hook's parts list: a single sheet logistics can print and take along with the parts */
+function printHook(g) {
+  const when = new Date();
+  const stamp = when.toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  const total = g.items.reduce((s, l) => s + l.qty, 0);
+  const rows = g.items.map(l => `<tr><td class="b">☐</td><td class="m">${esc(l.bin || "")}</td><td class="m">${l.sku}</td><td>${esc(l.name)}</td><td class="q">${l.qty}</td></tr>`).join("");
+  const reqs = g.rs.slice().sort((a, b) => a.createdAt - b.createdAt).map(r => `<li>Sent ${esc(new Date(r.createdAt).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))}${r.urgent ? " · <b>URGENT</b>" : ""}${r.note ? " · “" + esc(r.note) + "”" : ""}</li>`).join("");
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Hook ${g.hook} parts ${esc(stamp)}</title><style>
+    body{font:13px/1.4 Arial,sans-serif;margin:24px;color:#000}
+    .hd{display:flex;align-items:center;gap:16px;border-bottom:3px solid #000;padding-bottom:10px;margin-bottom:12px}
+    .n{font:bold 48px/1 Arial Narrow,Arial,sans-serif;border:3px solid #000;padding:4px 12px}
+    h1{font-size:20px;margin:0}.meta{color:#444}
+    table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #999;padding:7px 6px;text-align:left;vertical-align:top}th{border-bottom:2px solid #000;font-size:11px;text-transform:uppercase}
+    .m{font-family:Consolas,monospace}.q{text-align:right;font-weight:bold;font-size:16px}.b{font-size:18px;width:24px}
+    ul{padding-left:18px}.sign{margin-top:28px;display:flex;gap:40px}.sign div{flex:1;border-top:1px solid #000;padding-top:4px;font-size:11px}
+    @media print{body{margin:10mm}}
+  </style></head><body>
+  <div class="hd"><div class="n">${g.hook}</div><div><h1>Parts for Hook ${g.hook}</h1><div class="meta">${esc(stamp)} · ${g.items.length} lines · ${total} parts · status: ${esc(STATUS_LABEL[g.rs[0].status] || "")}</div></div></div>
+  <table><thead><tr><th></th><th>Shelf</th><th>SKU</th><th>Part</th><th style="text-align:right">Qty</th></tr></thead><tbody>${rows}</tbody></table>
+  <h3>Requests</h3><ul>${reqs}</ul>
+  <div class="sign"><div>Picked by</div><div>Delivered by / time</div></div>
+  </body></html>`;
+  const fname = `hook-${g.hook}-parts-${when.toISOString().slice(0, 16).replace(/[T:]/g, "-")}.html`;
+  const text = `Hook ${g.hook}\n` + g.items.map(l => `${l.bin || ""}\t${l.sku}\t${l.qty}x\t${l.name}`).join("\n");
+  return outputPrintable(html, fname, text);
+}
+
+async function outputPrintable(html, fname, text) {
   if (!(window.claude && window.claude.use)) {
     /* Standalone (own server / GitHub Pages): print straight from a hidden frame */
     const f = document.createElement("iframe");
@@ -715,10 +758,9 @@ async function downloadPickList(lines, open) {
   }
   try {
     const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
-    if (dl) { await dl.save({ filename: fname, data: html }); toast("Pick list saved. Open it to print."); return; }
+    if (dl) { await dl.save({ filename: fname, data: html.replace("<body>", '<body onload="setTimeout(function(){window.print()},300)">') }); toast("Saved. Open the file to print it."); return; }
   } catch (e) { if (e && e.code === "declined") return; }
-  const text = lines.map(l => `${l.bin}\t${l.sku}\t${l.qty}x\t${l.name}\t${[...l.hooks.keys()].map(h => "Hook " + h).join(", ")}`).join("\n");
-  try { await navigator.clipboard.writeText(text); toast("Downloads aren't available here, so the pick list was copied as text."); }
+  try { await navigator.clipboard.writeText(text); toast("Downloads aren't available here, so the list was copied as text."); }
   catch { toast("Downloads aren't available in this view."); }
 }
 

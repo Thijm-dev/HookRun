@@ -131,7 +131,6 @@ label.lbl { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-trans
 .empty { padding: 22px 14px; text-align: center; color: var(--muted); font-size: 14px; background: var(--sunk); border-radius: 8px; }
 .opts { display: grid; gap: 10px; }
 .check { display: flex; gap: 10px; align-items: center; font-weight: 500; }
-.check input { width: 20px; height: 20px; accent-color: var(--urgent); }
 textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--surface); resize: vertical; min-height: 42px; }
 
 /* Status pills */
@@ -139,7 +138,6 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; paddi
 .pill.open { background: var(--info-soft); color: var(--info); }
 .pill.picked { background: color-mix(in srgb, var(--signal) 28%, var(--surface)); color: var(--ink); }
 .pill.delivered { background: var(--go-soft); color: var(--go); }
-.pill.urgent { background: var(--urgent); color: #fff; }
 .pill.ex { background: var(--sunk); color: var(--muted); font-weight: 500; }
 
 .reqlist { display: grid; gap: 10px; }
@@ -152,7 +150,6 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; paddi
 .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
 .kpi b { display: block; font-family: var(--display); font-size: 34px; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .kpi span { font-size: 13px; color: var(--muted); }
-.kpi.alert b { color: var(--urgent); }
 .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
 .seg { display: inline-flex; background: var(--sunk); border-radius: 8px; padding: 3px; gap: 2px; flex-wrap: wrap; }
 .seg button { border: 0; background: none; padding: 6px 12px; border-radius: 6px; font-weight: 500; font-size: 14px; }
@@ -160,7 +157,6 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; paddi
 .seg button .n { font-size: 12px; color: var(--muted); margin-left: 4px; }
 .hooks { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
 .hookcard { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: grid; min-width: 0; }
-.hookcard.is-urgent { border-color: var(--urgent); box-shadow: inset 4px 0 0 var(--urgent); }
 .hookhead { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
 .hooknum { font-family: var(--display); font-size: 30px; font-weight: 700; line-height: 1; background: var(--ink); color: var(--bg); border-radius: 6px; padding: 4px 9px 2px; }
 .hookmeta { font-size: 12px; color: var(--muted); line-height: 1.35; margin-right: auto; }
@@ -185,7 +181,6 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; paddi
 .aisle td { background: var(--sunk); font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 5px 12px; }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .chips span { font-size: 12px; background: var(--ink); color: var(--bg); border-radius: 4px; padding: 0 6px; white-space: nowrap; }
-.chips span.u { background: var(--urgent); color: #fff; }
 
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 8px; font-weight: 500; z-index: 20; max-width: calc(100% - 32px); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
 .foot { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; }
@@ -259,7 +254,6 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; paddi
         <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
         <div id="basket"></div>
         <div class="opts">
-          <label class="check"><input type="checkbox" id="urgent"> Bike is waiting on this, needed today</label>
           <div>
             <label class="lbl" for="note">Note for logistics (optional)</label>
             <textarea id="note" rows="2" placeholder="e.g. customer bike, pick-up at 16:00"></textarea>
@@ -375,7 +369,7 @@ function exampleRequests() {
   const it = (sku, qty) => ({ sku, name: BY_SKU.get(sku).name, bin: BY_SKU.get(sku).bin, qty });
   return [
     { hook: 3, items: [it("310104", 4), it("320219", 2), it("350539", 1)], urgent: false, note: "", status: "open", createdAt: now - 190 * min, example: true },
-    { hook: 7, items: [it("330310", 1), it("330345", 1), it("330353", 2)], urgent: true, note: "Customer bike, pick-up 16:00", status: "open", createdAt: now - 42 * min, example: true },
+    { hook: 7, items: [it("330310", 1), it("330345", 1), it("330353", 2)], urgent: false, note: "Shifter for the 7-speed on the stand", status: "open", createdAt: now - 42 * min, example: true },
     { hook: 12, items: [it("310104", 2), it("340403", 1), it("340429", 1), it("370706", 1)], urgent: false, note: "", status: "open", createdAt: now - 75 * min, example: true },
     { hook: 15, items: [it("360605", 1), it("360648", 1)], urgent: false, note: "Charger for loan bike", status: "open", createdAt: now - 18 * min, example: true },
     { hook: 3, items: [it("320201", 1), it("320243", 1)], urgent: false, note: "", status: "picked", createdAt: now - 26 * 60 * min, pickedAt: now - 60 * min, example: true },
@@ -551,14 +545,14 @@ $("basket").addEventListener("click", e => {
 
 $("send").onclick = async () => {
   if (!ui.basket.length || !ui.hook) return;
-  const req = { hook: ui.hook, items: ui.basket.map(l => ({ ...l })), urgent: $("urgent").checked, note: $("note").value.trim().slice(0, 300), status: "open", createdAt: Date.now() };
+  const req = { hook: ui.hook, items: ui.basket.map(l => ({ ...l })), note: $("note").value.trim().slice(0, 300), status: "open", createdAt: Date.now() };
   const n = req.items.reduce((s, l) => s + l.qty, 0);
   $("send").disabled = true;
   try {
     await store.add(req);
-    ui.basket = []; $("urgent").checked = false; $("note").value = "";
+    ui.basket = []; $("note").value = "";
     $("feedback").textContent = "";
-    toast(`Sent to logistics: Hook ${req.hook}, ${n} part${n > 1 ? "s" : ""}${req.urgent ? ", marked urgent" : ""}`);
+    toast(`Sent to logistics: Hook ${req.hook}, ${n} part${n > 1 ? "s" : ""}`);
   } catch {
     toast("Couldn't send. Check the connection and try again.");
   }
@@ -572,7 +566,7 @@ function renderWorkshop() {
   const mine = store.requests.filter(r => r.hook === ui.hook).sort((a, b) => b.createdAt - a.createdAt).slice(0, 8);
   $("mine").innerHTML = mine.length ? mine.map(r => `
     <article class="req">
-      <header><span class="pill ${r.status}">${STATUS_LABEL[r.status]}</span>${r.urgent ? '<span class="pill urgent">Urgent</span>' : ""}${r.example ? '<span class="pill ex">Example</span>' : ""}<span>sent ${ago(r.createdAt)}</span></header>
+      <header><span class="pill ${r.status}">${STATUS_LABEL[r.status]}</span>${r.example ? '<span class="pill ex">Example</span>' : ""}<span>sent ${ago(r.createdAt)}</span></header>
       <ul>${r.items.map(l => `<li>${l.qty} × ${esc(l.name)}</li>`).join("")}</ul>
     </article>`).join("") : `<div class="empty">No requests from Hook ${ui.hook} yet.</div>`;
 }
@@ -587,8 +581,8 @@ function pickLines(reqs) {
   const map = new Map();
   for (const r of reqs) for (const l of r.items) {
     const k = l.sku;
-    if (!map.has(k)) map.set(k, { sku: l.sku, name: l.name, bin: l.bin || (BY_SKU.get(l.sku) || {}).bin || "?", qty: 0, hooks: new Map(), urgent: false });
-    const e = map.get(k); e.qty += l.qty; e.hooks.set(r.hook, (e.hooks.get(r.hook) || 0) + l.qty); if (r.urgent) { e.urgent = true; e.urgentHooks = (e.urgentHooks || new Set()).add(r.hook); }
+    if (!map.has(k)) map.set(k, { sku: l.sku, name: l.name, bin: l.bin || (BY_SKU.get(l.sku) || {}).bin || "?", qty: 0, hooks: new Map() });
+    const e = map.get(k); e.qty += l.qty; e.hooks.set(r.hook, (e.hooks.get(r.hook) || 0) + l.qty);
   }
   return [...map.values()].sort((a, b) => a.bin.localeCompare(b.bin));
 }
@@ -599,8 +593,8 @@ function byHook(reqs) {
   return [...g.entries()].map(([hook, rs]) => {
     const items = new Map();
     for (const r of rs) for (const l of r.items) { const e = items.get(l.sku) || { ...l, qty: 0 }; e.qty += l.qty; items.set(l.sku, e); }
-    return { hook, rs, items: [...items.values()].sort((a, b) => (a.bin || "").localeCompare(b.bin || "")), urgent: rs.some(r => r.urgent), oldest: Math.min(...rs.map(r => r.createdAt)) };
-  }).sort((a, b) => (b.urgent - a.urgent) || (a.oldest - b.oldest));
+    return { hook, rs, items: [...items.values()].sort((a, b) => (a.bin || "").localeCompare(b.bin || "")), oldest: Math.min(...rs.map(r => r.createdAt)) };
+  }).sort((a, b) => a.hook - b.hook);
 }
 
 function renderLogistics() {
@@ -609,12 +603,11 @@ function renderLogistics() {
   const counts = { open: open.length, picked: all.filter(r => r.status === "picked").length, delivered: all.filter(r => r.status === "delivered").length };
   const parts = open.reduce((s, r) => s + r.items.reduce((t, l) => t + l.qty, 0), 0);
   const hooksWaiting = new Set(open.map(r => r.hook)).size;
-  const urgent = open.filter(r => r.urgent).length;
   const oldest = open.length ? Math.min(...open.map(r => r.createdAt)) : null;
   $("kpis").innerHTML = `
     <div class="kpi"><b>${hooksWaiting}</b><span>hooks waiting for parts</span></div>
     <div class="kpi"><b>${parts}</b><span>parts to pick</span></div>
-    <div class="kpi ${urgent ? "alert" : ""}"><b>${urgent}</b><span>urgent requests</span></div>
+    <div class="kpi"><b>${counts.picked}</b><span>ready to deliver</span></div>
     <div class="kpi"><b>${oldest ? ago(oldest).replace(" ago", "") : "–"}</b><span>oldest open request</span></div>`;
 
   $("lv-hooks").setAttribute("aria-pressed", ui.lview === "hooks");
@@ -631,7 +624,7 @@ function renderLogistics() {
       const a = l.bin.charAt(0);
       if (a !== aisle) { aisle = a; rows += `<tr class="aisle"><td colspan="6">${esc(AISLES[a] || "Aisle " + a)}</td></tr>`; }
       const done = ui.ticked.has(l.sku);
-      const hookChips = [...l.hooks.entries()].sort((x, y) => x[0] - y[0]).map(([h, q]) => `<span class="${l.urgentHooks && l.urgentHooks.has(h) ? "u" : ""}">Hook ${h} ×${q}</span>`).join("");
+      const hookChips = [...l.hooks.entries()].sort((x, y) => x[0] - y[0]).map(([h, q]) => `<span>Hook ${h} ×${q}</span>`).join("");
       rows += `<tr class="${done ? "done" : ""}">
         <td><input type="checkbox" data-tick="${l.sku}" ${done ? "checked" : ""} aria-label="Picked ${esc(l.name)}"></td>
         <td><span class="bin">${l.bin}</span></td>
@@ -667,11 +660,10 @@ function renderLogistics() {
   }
   const action = { open: ["Mark picked", "picked", "pickedAt"], picked: ["Mark delivered", "delivered", "deliveredAt"] }[ui.status];
   el.innerHTML = `<div class="hooks">` + groups.map(g => `
-    <article class="hookcard ${g.urgent && ui.status !== "delivered" ? "is-urgent" : ""}">
+    <article class="hookcard">
       <div class="hookhead">
         <span class="hooknum">${g.hook}</span>
         <div class="hookmeta"><b>Hook ${g.hook}</b>${g.rs.length} request${g.rs.length > 1 ? "s" : ""} · ${ui.status === "delivered" ? "delivered " + clock(Math.max(...g.rs.map(r => r.deliveredAt || 0))) : "since " + ago(g.oldest)}</div>
-        ${g.urgent && ui.status !== "delivered" ? '<span class="pill urgent">Urgent</span>' : ""}
         ${g.rs.every(r => r.example) ? '<span class="pill ex">Example</span>' : ""}
       </div>
       <table class="lines"><tbody>${g.items.map(l => `<tr><td class="s mono">${esc(l.bin || "")}</td><td>${esc(l.name)}<div class="s mono">${l.sku}</div></td><td class="q">× ${l.qty}</td></tr>`).join("")}</tbody></table>
@@ -692,8 +684,8 @@ function renderLogistics() {
 async function downloadPickList(lines, open) {
   const when = new Date();
   const stamp = when.toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-  const rows = lines.map(l => `<tr><td class="b">☐</td><td class="m">${esc(l.bin)}</td><td class="m">${l.sku}</td><td>${esc(l.name)}</td><td class="q">${l.qty}</td><td>${[...l.hooks.entries()].sort((a, b) => a[0] - b[0]).map(([h, q]) => `H${h}×${q}${l.urgentHooks && l.urgentHooks.has(h) ? "!" : ""}`).join(", ")}</td></tr>`).join("");
-  const perHook = byHook(open).map(g => `<section><h3>Hook ${g.hook}${g.urgent ? " · URGENT" : ""}</h3><ul>${g.items.map(l => `<li>${l.qty} × ${esc(l.name)} <span class="m">(${l.sku})</span></li>`).join("")}</ul>${g.rs.filter(r => r.note).map(r => `<p>Note: ${esc(r.note)}</p>`).join("")}</section>`).join("");
+  const rows = lines.map(l => `<tr><td class="b">☐</td><td class="m">${esc(l.bin)}</td><td class="m">${l.sku}</td><td>${esc(l.name)}</td><td class="q">${l.qty}</td><td>${[...l.hooks.entries()].sort((a, b) => a[0] - b[0]).map(([h, q]) => `H${h}×${q}`).join(", ")}</td></tr>`).join("");
+  const perHook = byHook(open).map(g => `<section><h3>Hook ${g.hook}</h3><ul>${g.items.map(l => `<li>${l.qty} × ${esc(l.name)} <span class="m">(${l.sku})</span></li>`).join("")}</ul>${g.rs.filter(r => r.note).map(r => `<p>Note: ${esc(r.note)}</p>`).join("")}</section>`).join("");
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>Pick list ${esc(stamp)}</title><style>
     body{font:13px/1.4 Arial,sans-serif;margin:24px;color:#000}h1{font-size:20px;margin:0}h2{font-size:15px;margin:22px 0 6px}h3{font-size:13px;margin:0 0 4px}
     table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #999;padding:6px;text-align:left;vertical-align:top}th{border-bottom:2px solid #000;font-size:11px;text-transform:uppercase}
@@ -701,7 +693,7 @@ async function downloadPickList(lines, open) {
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}section{border:1px solid #000;padding:8px;break-inside:avoid}ul{margin:0;padding-left:16px}p{margin:4px 0 0;font-style:italic}
     .meta{color:#444;margin:4px 0 12px}@media print{body{margin:10mm}}
   </style></head><body onload="setTimeout(function(){window.print()},300)">
-  <h1>Pick list</h1><div class="meta">${esc(stamp)} · ${open.length} requests · ${new Set(open.map(r => r.hook)).size} hooks · ${lines.reduce((s, l) => s + l.qty, 0)} parts · sorted by shelf. "!" = urgent</div>
+  <h1>Pick list</h1><div class="meta">${esc(stamp)} · ${open.length} requests · ${new Set(open.map(r => r.hook)).size} hooks · ${lines.reduce((s, l) => s + l.qty, 0)} parts · sorted by shelf</div>
   <table><thead><tr><th></th><th>Shelf</th><th>SKU</th><th>Part</th><th style="text-align:right">Qty</th><th>Deliver to</th></tr></thead><tbody>${rows}</tbody></table>
   <h2>Delivery slips per hook</h2><div class="grid">${perHook}</div></body></html>`;
   const fname = `pick-list-${when.toISOString().slice(0, 16).replace(/[T:]/g, "-")}.html`;
@@ -715,7 +707,7 @@ function printHook(g) {
   const stamp = when.toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   const total = g.items.reduce((s, l) => s + l.qty, 0);
   const rows = g.items.map(l => `<tr><td class="b">☐</td><td class="m">${esc(l.bin || "")}</td><td class="m">${l.sku}</td><td>${esc(l.name)}</td><td class="q">${l.qty}</td></tr>`).join("");
-  const reqs = g.rs.slice().sort((a, b) => a.createdAt - b.createdAt).map(r => `<li>Sent ${esc(new Date(r.createdAt).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))}${r.urgent ? " · <b>URGENT</b>" : ""}${r.note ? " · “" + esc(r.note) + "”" : ""}</li>`).join("");
+  const reqs = g.rs.slice().sort((a, b) => a.createdAt - b.createdAt).map(r => `<li>Sent ${esc(new Date(r.createdAt).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))}${r.note ? " · “" + esc(r.note) + "”" : ""}</li>`).join("");
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>Hook ${g.hook} parts ${esc(stamp)}</title><style>
     body{font:13px/1.4 Arial,sans-serif;margin:24px;color:#000}
     .hd{display:flex;align-items:center;gap:16px;border-bottom:3px solid #000;padding-bottom:10px;margin-bottom:12px}

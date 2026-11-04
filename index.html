@@ -88,12 +88,11 @@ button { cursor: pointer; }
 label.lbl { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
 
 .hookrow { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
-.hookpick { display: flex; align-items: center; border: 2px solid var(--ink); border-radius: 8px; overflow: hidden; background: var(--surface); }
-.hookpick:focus-within { border-color: var(--signal); box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal) 35%, transparent); }
-.hookpre { background: var(--ink); color: var(--bg); font-family: var(--display); font-size: 18px; letter-spacing: .06em; text-transform: uppercase; padding: 0 12px; line-height: 52px; }
-.hookin { width: 140px; height: 52px; border: 0; background: transparent; font-family: var(--display); font-size: 32px; font-weight: 700; padding: 0 12px; }
-.hookin:focus { outline: none; }
-.hint { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; }
+.hookpick { position: relative; display: inline-block; }
+.hookin { appearance: none; -webkit-appearance: none; width: 190px; height: 52px; border: 2px solid var(--ink); border-radius: 8px; background: var(--surface); color: var(--ink); font-family: var(--display); font-size: 28px; font-weight: 700; letter-spacing: .02em; padding: 0 44px 0 14px; cursor: pointer; }
+.hookin:focus { outline: none; border-color: var(--signal); box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal) 35%, transparent); }
+.hookin option { font-family: var(--body); font-size: 16px; font-weight: 400; background: var(--surface); color: var(--ink); }
+.chev { position: absolute; right: 16px; top: 50%; width: 14px; height: 10px; transform: translateY(-50%); pointer-events: none; color: var(--ink); }
 
 .scanbox { position: relative; }
 .scan { width: 100%; height: 56px; border: 2px solid var(--ink); border-radius: 8px; background: var(--surface); padding: 0 14px 0 46px; font-size: 18px; }
@@ -238,13 +237,11 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; paddi
         <p class="sub">Pick your hook, scan the barcode on each part you need, send.</p>
         <div class="hookrow">
           <div>
-            <label class="lbl" for="hook-in">Your hook number</label>
+            <label class="lbl" for="hook-in">Your hook</label>
             <div class="hookpick">
-              <span class="hookpre">Hook</span>
-              <input id="hook-in" class="hookin" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" list="hook-list" autocomplete="off" value="7" aria-describedby="hook-hint">
-              <datalist id="hook-list"></datalist>
+              <select id="hook-in" class="hookin"></select>
+              <svg class="chev" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
             </div>
-            <small id="hook-hint" class="hint">Type your number or pick from the list.</small>
           </div>
         </div>
         <div>
@@ -349,7 +346,7 @@ const CATALOG = [
 ].map(([sku, name, bin, cat]) => ({ sku, name, bin, cat }));
 const BY_SKU = new Map(CATALOG.map(p => [p.sku, p]));
 const AISLES = { A: "Aisle A · Tyres & tubes", B: "Aisle B · Brakes", C: "Aisle C · Drivetrain", D: "Aisle D · Lights", E: "Aisle E · Frame & cockpit", F: "Aisle F · E-bike", G: "Aisle G · Small parts" };
-const MAX_HOOK = 30;
+const MAX_HOOK = 40;
 
 /* ---------- helpers ---------- */
 const $ = id => document.getElementById(id);
@@ -439,7 +436,7 @@ async function connect() {
 
 /* ---------- UI state ---------- */
 const ui = {
-  hook: Math.min(999, Math.max(1, Number(ls.get("hookrun.hook", 7)) || 7)),
+  hook: Math.min(MAX_HOOK, Math.max(1, Number(ls.get("hookrun.hook", 7)) || 7)),
   basket: [],
   lview: ls.get("hookrun.lview", "hooks"),
   status: "open",
@@ -460,20 +457,14 @@ function route() {
 window.addEventListener("hashchange", route);
 
 /* ---------- workshop ---------- */
-$("hook-list").innerHTML = Array.from({ length: MAX_HOOK }, (_, i) => `<option value="${i + 1}">Hook ${i + 1}</option>`).join("");
-$("hook-in").value = ui.hook;
-function readHook() {
-  const inp = $("hook-in");
-  const n = parseInt(inp.value.replace(/\D/g, ""), 10);
-  if (!n || n < 1) { $("hook-hint").textContent = "Enter your hook number to send a request."; $("hook-hint").style.color = "var(--urgent)"; ui.hook = null; renderWorkshop(); return; }
-  $("hook-hint").textContent = "Type your number or pick from the list."; $("hook-hint").style.color = "";
-  ui.hook = Math.min(999, n);
+$("hook-in").innerHTML = Array.from({ length: MAX_HOOK }, (_, i) => `<option value="${i + 1}">Hook ${i + 1}</option>`).join("");
+$("hook-in").value = String(ui.hook);
+$("hook-in").addEventListener("change", () => {
+  ui.hook = Number($("hook-in").value);
   ls.set("hookrun.hook", ui.hook);
   renderWorkshop();
-}
-$("hook-in").addEventListener("input", readHook);
-$("hook-in").addEventListener("change", readHook);
-$("hook-in").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); $("scan").focus(); } });
+  $("scan").focus();
+});
 
 function addPart(p, how) {
   const line = ui.basket.find(l => l.sku === p.sku);

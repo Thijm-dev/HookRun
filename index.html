@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>HookRun Parts Requests</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: workshop-floor tool. Sticky header with two stations (Workshop / Logistics), one working panel below; steel neutrals, signal-yellow for action. */
+:root {
+  --bg: #EDF0F2;
+  --surface: #FFFFFF;
+  --sunk: #E3E7EA;
+  --ink: #161A1E;
+  --muted: #5A6570;
+  --line: #D3D9DE;
+  --signal: #F2B705;
+  --signal-ink: #161A1E;
+  --go: #1D7A4C;
+  --go-soft: #DDF0E5;
+  --urgent: #BF3418;
+  --urgent-soft: #F9E1DA;
+  --info: #2A5A86;
+  --info-soft: #DEE8F2;
+  --display: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111417; --surface: #1A1F24; --sunk: #232A30; --ink: #E7EBEE; --muted: #94A1AC; --line: #2D353C;
+    --signal: #F2B705; --signal-ink: #161A1E; --go: #43B97C; --go-soft: #173325; --urgent: #F06A4C; --urgent-soft: #3A1E17;
+    --info: #86B4DF; --info-soft: #1B2A38; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111417; --surface: #1A1F24; --sunk: #232A30; --ink: #E7EBEE; --muted: #94A1AC; --line: #2D353C;
+  --signal: #F2B705; --signal-ink: #161A1E; --go: #43B97C; --go-soft: #173325; --urgent: #F06A4C; --urgent-soft: #3A1E17;
+  --info: #86B4DF; --info-soft: #1B2A38; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--signal); outline-offset: 2px; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* Header */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--ink); color: var(--bg); }
+.top-inner { max-width: 1180px; margin: 0 auto; padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
+.brand b { font-family: var(--display); font-size: 26px; letter-spacing: .02em; text-transform: uppercase; line-height: 1; }
+.brand b i { font-style: normal; color: var(--signal); }
+.brand span { font-size: 13px; opacity: .7; }
+.tabs { display: flex; gap: 4px; background: rgba(255,255,255,.08); padding: 4px; border-radius: 8px; }
+.tabs a { color: inherit; text-decoration: none; font-family: var(--display); font-size: 18px; letter-spacing: .04em; text-transform: uppercase; padding: 4px 14px; border-radius: 6px; }
+.tabs a[aria-current="page"] { background: var(--signal); color: var(--signal-ink); }
+.mode { font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1px solid rgba(255,255,255,.25); white-space: nowrap; }
+.mode::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: currentColor; vertical-align: 1px; }
+.mode.live { color: #6FDCA0; }
+.mode.local { color: #F2C94C; }
+
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 20px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 20px; }
+
+/* Before / after strip */
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.flow { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+.flow h2 { margin: 0 0 8px; font-family: var(--display); font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.flow.after h2 { color: var(--go); }
+.steps { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
+.steps li { background: var(--sunk); padding: 3px 9px; border-radius: 5px; }
+.steps li + li::before { content: "→"; margin-right: 6px; color: var(--muted); }
+.flow.before .steps li { text-decoration: none; }
+.flow.after .steps li { background: var(--go-soft); }
+.flow p { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+
+/* Panels */
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; min-width: 0; display: grid; gap: 14px; }
+.panel h3 { margin: 0; font-family: var(--display); font-size: 22px; letter-spacing: .02em; text-transform: uppercase; text-wrap: balance; }
+.sub { margin: -8px 0 0; color: var(--muted); font-size: 13px; }
+label.lbl { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
+
+.hookrow { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+.hookpick { display: flex; align-items: center; gap: 0; border: 2px solid var(--ink); border-radius: 8px; overflow: hidden; }
+.hookpick button { background: var(--sunk); border: 0; width: 40px; height: 48px; font-size: 22px; font-weight: 600; }
+.hookpick output { min-width: 70px; text-align: center; font-family: var(--display); font-size: 30px; font-weight: 700; line-height: 48px; padding: 0 6px; }
+.hookpick output small { font-size: 14px; color: var(--muted); margin-right: 4px; letter-spacing: .06em; }
+
+.scanbox { position: relative; }
+.scan { width: 100%; height: 56px; border: 2px solid var(--ink); border-radius: 8px; background: var(--surface); padding: 0 14px 0 46px; font-size: 18px; }
+.scan:focus { border-color: var(--signal); box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal) 35%, transparent); outline: none; }
+.scanicon { position: absolute; left: 14px; top: 17px; width: 20px; height: 22px; pointer-events: none; color: var(--muted); }
+.suggest { position: absolute; left: 0; right: 0; top: 60px; z-index: 4; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.15); margin: 0; padding: 4px; list-style: none; max-height: 280px; overflow: auto; }
+.suggest button { width: 100%; text-align: left; background: none; border: 0; padding: 8px 10px; border-radius: 6px; display: flex; gap: 10px; align-items: baseline; }
+.suggest button:hover, .suggest button.hl { background: var(--sunk); }
+.suggest .mono { font-size: 12px; color: var(--muted); }
+.scanhelp { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); }
+.feedback { min-height: 22px; font-size: 14px; font-weight: 500; }
+.feedback.ok { color: var(--go); }
+.feedback.err { color: var(--urgent); }
+
+.btn { border: 0; border-radius: 8px; padding: 10px 16px; font-weight: 600; background: var(--sunk); }
+.btn:hover { filter: brightness(.96); }
+.btn.primary { background: var(--signal); color: var(--signal-ink); }
+.btn.dark { background: var(--ink); color: var(--bg); }
+.btn.small { padding: 5px 10px; font-size: 13px; }
+.btn.ghost { background: none; border: 1px solid var(--line); }
+.btn:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+.btn.big { font-size: 17px; padding: 14px 18px; width: 100%; font-family: var(--display); letter-spacing: .05em; text-transform: uppercase; }
+
+/* Basket */
+.basket { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.bline { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--line); }
+.bline:first-child { border-top: 0; }
+.bline .nm { min-width: 0; }
+.bline .nm div { font-weight: 500; }
+.bline .nm small { color: var(--muted); font-size: 12px; }
+.qty { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 6px; }
+.qty button { background: none; border: 0; width: 30px; height: 30px; font-size: 18px; }
+.qty span { min-width: 26px; text-align: center; font-weight: 600; }
+.x { background: none; border: 0; color: var(--muted); font-size: 20px; width: 30px; height: 30px; border-radius: 6px; }
+.x:hover { background: var(--urgent-soft); color: var(--urgent); }
+.empty { padding: 22px 14px; text-align: center; color: var(--muted); font-size: 14px; background: var(--sunk); border-radius: 8px; }
+.opts { display: grid; gap: 10px; }
+.check { display: flex; gap: 10px; align-items: center; font-weight: 500; }
+.check input { width: 20px; height: 20px; accent-color: var(--urgent); }
+textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--surface); resize: vertical; min-height: 42px; }
+
+/* Status pills */
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.pill.open { background: var(--info-soft); color: var(--info); }
+.pill.picked { background: color-mix(in srgb, var(--signal) 28%, var(--surface)); color: var(--ink); }
+.pill.delivered { background: var(--go-soft); color: var(--go); }
+.pill.urgent { background: var(--urgent); color: #fff; }
+.pill.ex { background: var(--sunk); color: var(--muted); font-weight: 500; }
+
+.reqlist { display: grid; gap: 10px; }
+.req { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; }
+.req header { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.req ul { margin: 0; padding-left: 18px; font-size: 14px; }
+
+/* Logistics */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.kpi b { display: block; font-family: var(--display); font-size: 34px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.kpi span { font-size: 13px; color: var(--muted); }
+.kpi.alert b { color: var(--urgent); }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.seg { display: inline-flex; background: var(--sunk); border-radius: 8px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+.seg button { border: 0; background: none; padding: 6px 12px; border-radius: 6px; font-weight: 500; font-size: 14px; }
+.seg button[aria-pressed="true"] { background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.12); font-weight: 600; }
+.seg button .n { font-size: 12px; color: var(--muted); margin-left: 4px; }
+.hooks { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+.hookcard { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: grid; min-width: 0; }
+.hookcard.is-urgent { border-color: var(--urgent); box-shadow: inset 4px 0 0 var(--urgent); }
+.hookhead { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.hooknum { font-family: var(--display); font-size: 30px; font-weight: 700; line-height: 1; background: var(--ink); color: var(--bg); border-radius: 6px; padding: 4px 9px 2px; }
+.hookmeta { font-size: 12px; color: var(--muted); line-height: 1.35; margin-right: auto; }
+.hookmeta b { color: var(--ink); font-size: 14px; display: block; }
+.lines { width: 100%; border-collapse: collapse; font-size: 14px; }
+.lines td { padding: 7px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+.lines tr:first-child td { border-top: 0; }
+.lines .q { text-align: right; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.lines .s { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.note { margin: 0; padding: 8px 14px; font-size: 13px; background: var(--sunk); border-top: 1px solid var(--line); }
+.hookfoot { padding: 10px 14px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px; }
+
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.pick { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 640px; }
+.pick th { text-align: left; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 10px 12px; border-bottom: 2px solid var(--ink); }
+.pick td { padding: 10px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+.pick tr.done td { opacity: .45; }
+.pick tr.done .pn { text-decoration: line-through; }
+.pick .bin { font-family: var(--mono); font-weight: 500; background: var(--sunk); border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
+.pick .q { text-align: right; font-family: var(--display); font-size: 22px; font-weight: 700; }
+.pick input { width: 22px; height: 22px; accent-color: var(--go); }
+.aisle td { background: var(--sunk); font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 5px 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chips span { font-size: 12px; background: var(--ink); color: var(--bg); border-radius: 4px; padding: 0 6px; white-space: nowrap; }
+.chips span.u { background: var(--urgent); color: #fff; }
+
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 8px; font-weight: 500; z-index: 20; max-width: calc(100% - 32px); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+.foot { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--info); text-decoration: underline; font-size: inherit; }
+
+@media (max-width: 860px) {
+  .grid2, .compare { grid-template-columns: 1fr; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .brand span { display: none; }
+  .hooks { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hookcard, .req { animation: rise .25s ease-out; }
+  @keyframes rise { from { transform: translateY(4px); } to { transform: none; } }
+}
+</style>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand"><b>Hook<i>Run</i></b><span>workshop parts requests</span></div>
+    <nav class="tabs" aria-label="Station">
+      <a href="#workshop" id="tab-workshop">Workshop</a>
+      <a href="#logistics" id="tab-logistics">Logistics</a>
+    </nav>
+    <span class="mode local" id="mode">Connecting…</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="compare" aria-label="How this changes the process">
+    <div class="flow before">
+      <h2>Today</h2>
+      <ol class="steps"><li>Scan SKUs</li><li>Open Slack</li><li>Google Form</li><li>Logistics exports &amp; prints</li><li>Delivery twice a week</li></ol>
+      <p>Four tools, and requests from different hooks come in as separate form rows.</p>
+    </div>
+    <div class="flow after">
+      <h2>With HookRun</h2>
+      <ol class="steps"><li>Scan SKUs at your hook</li><li>Logistics sees it live, per hook</li><li>One pick list, sorted by shelf</li><li>Deliver</li></ol>
+      <p>One web page on the company network. Works with the barcode scanners you already have.</p>
+    </div>
+  </section>
+
+  <section id="view-workshop" hidden>
+    <div class="grid2">
+      <div class="panel">
+        <h3>Request parts</h3>
+        <p class="sub">Pick your hook, scan the barcode on each part you need, send.</p>
+        <div class="hookrow">
+          <div>
+            <label class="lbl" for="hook-out">Your hook</label>
+            <div class="hookpick">
+              <button type="button" id="hook-dec" aria-label="Previous hook">−</button>
+              <output id="hook-out"><small>Hook</small>7</output>
+              <button type="button" id="hook-inc" aria-label="Next hook">+</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label class="lbl" for="scan">Scan barcode or search part</label>
+          <div class="scanbox">
+            <svg class="scanicon" viewBox="0 0 20 22" aria-hidden="true"><g fill="currentColor"><rect x="0" y="0" width="2" height="22"/><rect x="4" y="0" width="1" height="22"/><rect x="7" y="0" width="3" height="22"/><rect x="12" y="0" width="1" height="22"/><rect x="15" y="0" width="2" height="22"/><rect x="19" y="0" width="1" height="22"/></g></svg>
+            <input class="scan mono" id="scan" autocomplete="off" spellcheck="false" placeholder="e.g. 310104 or “brake pads”" aria-describedby="feedback">
+            <ul class="suggest" id="suggest" hidden></ul>
+          </div>
+        </div>
+        <div class="scanhelp">
+          <span>No scanner here?</span>
+          <button type="button" class="btn small ghost" id="demo-scan">Simulate a scan</button>
+        </div>
+        <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+        <div id="basket"></div>
+        <div class="opts">
+          <label class="check"><input type="checkbox" id="urgent"> Bike is waiting on this, needed today</label>
+          <div>
+            <label class="lbl" for="note">Note for logistics (optional)</label>
+            <textarea id="note" rows="2" placeholder="e.g. customer bike, pick-up at 16:00"></textarea>
+          </div>
+        </div>
+        <button type="button" class="btn primary big" id="send" disabled>Send to logistics</button>
+      </div>
+
+      <div class="panel">
+        <h3 id="mine-title">Hook 7 requests</h3>
+        <p class="sub">What you asked for and where it is.</p>
+        <div class="reqlist" id="mine"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-logistics" hidden>
+    <div style="display:grid; gap:16px">
+      <div class="kpis" id="kpis"></div>
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="View">
+          <button type="button" id="lv-hooks" aria-pressed="true">By hook</button>
+          <button type="button" id="lv-pick" aria-pressed="false">Pick list by shelf</button>
+        </div>
+        <div class="seg" role="group" aria-label="Status" id="status-seg">
+          <button type="button" data-st="open" aria-pressed="true">To pick<span class="n"></span></button>
+          <button type="button" data-st="picked" aria-pressed="false">Ready to deliver<span class="n"></span></button>
+          <button type="button" data-st="delivered" aria-pressed="false">Delivered<span class="n"></span></button>
+        </div>
+      </div>
+      <div id="logi"></div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span>Concept demo. Part numbers, names and shelf locations are examples.</span>
+    <span id="reset-wrap" hidden><button type="button" class="linkbtn" id="reset">Reset demo data</button></span>
+  </div>
+</main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+"use strict";
+
+/* ---------- Example parts catalogue (SKU → name, shelf bin) ---------- */
+const CATALOG = [
+  ["310104", "Inner tube 28\" Dunlop valve", "A-01-1", "Tyres & tubes"],
+  ["310112", "City tyre 28 x 1.75 puncture-resistant", "A-01-2", "Tyres & tubes"],
+  ["310120", "Rim tape 28\"", "A-01-3", "Tyres & tubes"],
+  ["310139", "Dunlop valve inserts (10 pcs)", "A-01-4", "Tyres & tubes"],
+  ["310147", "Inner tube 26\" Dunlop valve", "A-01-5", "Tyres & tubes"],
+  ["320201", "Roller brake cable, rear", "B-02-1", "Brakes"],
+  ["320219", "V-brake pads (pair)", "B-02-2", "Brakes"],
+  ["320227", "Brake lever, left", "B-02-3", "Brakes"],
+  ["320235", "Brake lever, right", "B-02-4", "Brakes"],
+  ["320243", "Roller brake grease 100 g", "B-02-5", "Brakes"],
+  ["320251", "Coaster brake arm clamp", "B-02-6", "Brakes"],
+  ["330302", "Chain 1/8\" 112 links (single speed)", "C-03-1", "Drivetrain"],
+  ["330310", "Chain 3/32\" 116 links (7-speed)", "C-03-2", "Drivetrain"],
+  ["330329", "Rear sprocket 18T", "C-03-3", "Drivetrain"],
+  ["330337", "Pedals, city (pair)", "C-03-4", "Drivetrain"],
+  ["330345", "Twist shifter 7-speed", "C-03-5", "Drivetrain"],
+  ["330353", "Shift cable inner 2000 mm", "C-03-6", "Drivetrain"],
+  ["330361", "Chain guard", "C-03-7", "Drivetrain"],
+  ["340403", "Front light LED, hub dynamo", "D-04-1", "Lights"],
+  ["340411", "Rear light LED, battery", "D-04-2", "Lights"],
+  ["340429", "Dynamo light wire set", "D-04-3", "Lights"],
+  ["350504", "Saddle, city comfort", "E-05-1", "Frame & cockpit"],
+  ["350512", "Seat post clamp 34.9 mm", "E-05-2", "Frame & cockpit"],
+  ["350520", "Handlebar grips (pair)", "E-05-3", "Frame & cockpit"],
+  ["350539", "Bell", "E-05-4", "Frame & cockpit"],
+  ["350547", "Kickstand, double leg", "E-05-5", "Frame & cockpit"],
+  ["350555", "Carrier strap", "E-05-6", "Frame & cockpit"],
+  ["350563", "Front mudguard", "E-05-7", "Frame & cockpit"],
+  ["350571", "Frame lock with key", "E-05-8", "Frame & cockpit"],
+  ["360605", "E-bike charger 36 V", "F-06-1", "E-bike"],
+  ["360613", "Battery lock cylinder", "F-06-2", "E-bike"],
+  ["360621", "Handlebar display unit", "F-06-3", "E-bike"],
+  ["360648", "Speed sensor + magnet", "F-06-4", "E-bike"],
+  ["370706", "Axle nuts M9 (10 pcs)", "G-07-1", "Small parts"],
+  ["370714", "Cable ties (100 pcs)", "G-07-2", "Small parts"],
+  ["370722", "Spokes 14G 262 mm (10 pcs)", "G-07-3", "Small parts"],
+].map(([sku, name, bin, cat]) => ({ sku, name, bin, cat }));
+const BY_SKU = new Map(CATALOG.map(p => [p.sku, p]));
+const AISLES = { A: "Aisle A · Tyres & tubes", B: "Aisle B · Brakes", C: "Aisle C · Drivetrain", D: "Aisle D · Lights", E: "Aisle E · Frame & cockpit", F: "Aisle F · E-bike", G: "Aisle G · Small parts" };
+const MAX_HOOK = 30;
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ls = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} },
+};
+function ago(ms) {
+  const m = Math.round((Date.now() - ms) / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return m + " min ago";
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + " h " + (m % 60 ? (m % 60) + " min " : "") + "ago";
+  return new Date(ms).toLocaleDateString(undefined, { day: "numeric", month: "short" }) + " " + clock(ms);
+}
+const clock = ms => new Date(ms).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+let toastT;
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2800); }
+const STATUS_LABEL = { open: "Waiting for pick", picked: "Picked, on its way", delivered: "Delivered" };
+
+/* ---------- example requests (used in demo mode) ---------- */
+function exampleRequests() {
+  const now = Date.now(), min = 60000;
+  const it = (sku, qty) => ({ sku, name: BY_SKU.get(sku).name, bin: BY_SKU.get(sku).bin, qty });
+  return [
+    { hook: 3, items: [it("310104", 4), it("320219", 2), it("350539", 1)], urgent: false, note: "", status: "open", createdAt: now - 190 * min, example: true },
+    { hook: 7, items: [it("330310", 1), it("330345", 1), it("330353", 2)], urgent: true, note: "Customer bike, pick-up 16:00", status: "open", createdAt: now - 42 * min, example: true },
+    { hook: 12, items: [it("310104", 2), it("340403", 1), it("340429", 1), it("370706", 1)], urgent: false, note: "", status: "open", createdAt: now - 75 * min, example: true },
+    { hook: 15, items: [it("360605", 1), it("360648", 1)], urgent: false, note: "Charger for loan bike", status: "open", createdAt: now - 18 * min, example: true },
+    { hook: 3, items: [it("320201", 1), it("320243", 1)], urgent: false, note: "", status: "picked", createdAt: now - 26 * 60 * min, pickedAt: now - 60 * min, example: true },
+    { hook: 9, items: [it("350504", 1), it("350520", 2)], urgent: false, note: "", status: "delivered", createdAt: now - 30 * 60 * min, pickedAt: now - 5 * 60 * min, deliveredAt: now - 4 * 60 * min, example: true },
+  ].map((r, i) => ({ id: "ex" + i, ...r }));
+}
+
+/* ---------- store: shared (db) when this viewer can write, otherwise this browser ---------- */
+const LS_KEY = "hookrun.requests.v1";
+const store = {
+  mode: "connecting", requests: [], db: null, unsub: null,
+  startLocal(reason) {
+    if (this.unsub) { try { this.unsub(); } catch {} this.unsub = null; }
+    this.mode = "local"; this.db = null;
+    this.requests = ls.get(LS_KEY, null) || exampleRequests();
+    this.saveLocal();
+    render();
+  },
+  saveLocal() { ls.set(LS_KEY, this.requests); },
+  async add(req) {
+    if (this.mode === "live") {
+      try { await this.db.collection("requests").add(req); return; }
+      catch (e) { if (e && e.code === "invalid_argument") { this.startLocal(); } else { throw e; } }
+    }
+    this.requests.push({ id: "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...req });
+    this.saveLocal(); render();
+  },
+  async update(id, patch) {
+    if (this.mode === "live") {
+      try { await this.db.doc("requests/" + id).update(patch); return; }
+      catch (e) { if (e && e.code === "invalid_argument") { this.startLocal(); } else { throw e; } }
+    }
+    const r = this.requests.find(x => x.id === id); if (r) Object.assign(r, patch);
+    this.saveLocal(); render();
+  },
+};
+
+async function connect() {
+  const c = window.claude;
+  if (!c || typeof c.use !== "function") return store.startLocal();
+  let settled = false;
+  const giveUp = setTimeout(() => { if (!settled) { settled = true; store.startLocal(); } }, 10000);
+  try {
+    const [db, user] = await Promise.all([c.use("db"), c.use("user")]);
+    if (settled) return;
+    const canWrite = user ? await user.can("data.write") : null;
+    if (!db || canWrite === false) { settled = true; clearTimeout(giveUp); return store.startLocal(); }
+    store.db = db;
+    store.unsub = db.collection("requests").onSnapshot(snap => {
+      if (!settled) { settled = true; clearTimeout(giveUp); }
+      if (store.mode === "local") return;
+      store.mode = "live";
+      store.requests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      render();
+    }, () => { if (!settled) { settled = true; clearTimeout(giveUp); } store.startLocal(); });
+  } catch { if (!settled) { settled = true; clearTimeout(giveUp); store.startLocal(); } }
+}
+
+/* ---------- UI state ---------- */
+const ui = {
+  hook: Math.min(MAX_HOOK, Math.max(1, Number(ls.get("hookrun.hook", 7)) || 7)),
+  basket: [],
+  lview: ls.get("hookrun.lview", "hooks"),
+  status: "open",
+  ticked: new Set(),
+  hl: 0,
+};
+
+/* ---------- routing ---------- */
+function route() {
+  const v = location.hash === "#logistics" ? "logistics" : "workshop";
+  $("view-workshop").hidden = v !== "workshop";
+  $("view-logistics").hidden = v !== "logistics";
+  $("tab-workshop").toggleAttribute("aria-current", v === "workshop");
+  $("tab-logistics").toggleAttribute("aria-current", v === "logistics");
+  if (v === "workshop") $("tab-workshop").setAttribute("aria-current", "page"); else $("tab-logistics").setAttribute("aria-current", "page");
+  if (v === "workshop") setTimeout(() => $("scan").focus({ preventScroll: true }), 0);
+}
+window.addEventListener("hashchange", route);
+
+/* ---------- workshop ---------- */
+function setHook(n) {
+  ui.hook = Math.min(MAX_HOOK, Math.max(1, n));
+  ls.set("hookrun.hook", ui.hook);
+  renderWorkshop();
+}
+$("hook-dec").onclick = () => setHook(ui.hook - 1);
+$("hook-inc").onclick = () => setHook(ui.hook + 1);
+
+function addPart(p, how) {
+  const line = ui.basket.find(l => l.sku === p.sku);
+  if (line) line.qty++; else ui.basket.push({ sku: p.sku, name: p.name, bin: p.bin, qty: 1 });
+  const q = ui.basket.find(l => l.sku === p.sku).qty;
+  const fb = $("feedback"); fb.className = "feedback ok";
+  fb.textContent = (how === "scan" ? "Scanned: " : "Added: ") + p.name + (q > 1 ? "  ×" + q : "");
+  renderBasket();
+}
+function findMatches(q) {
+  q = q.trim().toLowerCase(); if (!q) return [];
+  const words = q.split(/\s+/);
+  return CATALOG.filter(p => { const hay = (p.sku + " " + p.name + " " + p.cat).toLowerCase(); return words.every(w => hay.includes(w)); }).slice(0, 7);
+}
+function renderSuggest() {
+  const q = $("scan").value, list = $("suggest");
+  const m = /^\d+$/.test(q.trim()) && q.trim().length >= 6 ? [] : findMatches(q);
+  if (!m.length) { list.hidden = true; list.innerHTML = ""; return; }
+  ui.hl = Math.min(ui.hl, m.length - 1);
+  list.innerHTML = m.map((p, i) => `<li><button type="button" data-sku="${p.sku}" class="${i === ui.hl ? "hl" : ""}"><span class="mono">${p.sku}</span><span>${esc(p.name)}</span></button></li>`).join("");
+  list.hidden = false;
+}
+function submitScan() {
+  const raw = $("scan").value.trim(); if (!raw) return;
+  const p = BY_SKU.get(raw.replace(/\s/g, ""));
+  if (p) { addPart(p, "scan"); }
+  else {
+    const m = findMatches(raw);
+    if (m.length) addPart(m[Math.min(ui.hl, m.length - 1)], "search");
+    else { const fb = $("feedback"); fb.className = "feedback err"; fb.textContent = `“${raw}” isn't in the parts list. Check the label, or type part of the name.`; }
+  }
+  $("scan").value = ""; ui.hl = 0; renderSuggest();
+}
+$("scan").addEventListener("input", () => { ui.hl = 0; renderSuggest(); });
+$("scan").addEventListener("keydown", e => {
+  const items = $("suggest").querySelectorAll("button");
+  if (e.key === "Enter") { e.preventDefault(); submitScan(); }
+  else if (e.key === "ArrowDown" && items.length) { e.preventDefault(); ui.hl = (ui.hl + 1) % items.length; renderSuggest(); }
+  else if (e.key === "ArrowUp" && items.length) { e.preventDefault(); ui.hl = (ui.hl - 1 + items.length) % items.length; renderSuggest(); }
+  else if (e.key === "Escape") { $("scan").value = ""; renderSuggest(); }
+});
+$("suggest").addEventListener("mousedown", e => e.preventDefault());
+$("suggest").addEventListener("click", e => {
+  const b = e.target.closest("button[data-sku]"); if (!b) return;
+  addPart(BY_SKU.get(b.dataset.sku), "search"); $("scan").value = ""; renderSuggest(); $("scan").focus();
+});
+$("scan").addEventListener("blur", () => setTimeout(() => { $("suggest").hidden = true; }, 120));
+
+/* Simulated scanner: types the SKU fast and presses Enter, like a USB scanner does */
+$("demo-scan").onclick = () => {
+  const p = CATALOG[Math.floor(Math.random() * CATALOG.length)];
+  const inp = $("scan"); inp.value = ""; inp.focus();
+  let i = 0;
+  const t = setInterval(() => {
+    inp.value += p.sku[i++];
+    if (i >= p.sku.length) { clearInterval(t); setTimeout(submitScan, 120); }
+  }, 35);
+};
+
+function renderBasket() {
+  const el = $("basket");
+  if (!ui.basket.length) {
+    el.innerHTML = `<div class="empty">Nothing scanned yet. Scan the barcode on a part, or search by name.</div>`;
+  } else {
+    el.innerHTML = `<div class="basket">` + ui.basket.map((l, i) => `
+      <div class="bline">
+        <div class="nm"><div>${esc(l.name)}</div><small class="mono">${l.sku} · shelf ${l.bin}</small></div>
+        <div class="qty"><button type="button" data-dec="${i}" aria-label="One less">−</button><span>${l.qty}</span><button type="button" data-inc="${i}" aria-label="One more">+</button></div>
+        <button type="button" class="x" data-del="${i}" aria-label="Remove ${esc(l.name)}">×</button>
+      </div>`).join("") + `</div>`;
+  }
+  const total = ui.basket.reduce((s, l) => s + l.qty, 0);
+  const send = $("send");
+  send.disabled = !ui.basket.length || store.mode === "connecting";
+  send.textContent = total ? `Send ${total} part${total > 1 ? "s" : ""} to logistics` : "Send to logistics";
+}
+$("basket").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.inc) ui.basket[+b.dataset.inc].qty++;
+  else if (b.dataset.dec) { const l = ui.basket[+b.dataset.dec]; l.qty--; if (l.qty < 1) ui.basket.splice(+b.dataset.dec, 1); }
+  else if (b.dataset.del) ui.basket.splice(+b.dataset.del, 1);
+  renderBasket();
+});
+
+$("send").onclick = async () => {
+  if (!ui.basket.length) return;
+  const req = { hook: ui.hook, items: ui.basket.map(l => ({ ...l })), urgent: $("urgent").checked, note: $("note").value.trim().slice(0, 300), status: "open", createdAt: Date.now() };
+  const n = req.items.reduce((s, l) => s + l.qty, 0);
+  $("send").disabled = true;
+  try {
+    await store.add(req);
+    ui.basket = []; $("urgent").checked = false; $("note").value = "";
+    $("feedback").textContent = "";
+    toast(`Sent to logistics: Hook ${req.hook}, ${n} part${n > 1 ? "s" : ""}${req.urgent ? ", marked urgent" : ""}`);
+  } catch {
+    toast("Couldn't send. Check the connection and try again.");
+  }
+  renderWorkshop();
+};
+
+function renderWorkshop() {
+  $("hook-out").innerHTML = `<small>Hook</small>${ui.hook}`;
+  $("mine-title").textContent = `Hook ${ui.hook} requests`;
+  renderBasket();
+  const mine = store.requests.filter(r => r.hook === ui.hook).sort((a, b) => b.createdAt - a.createdAt).slice(0, 8);
+  $("mine").innerHTML = mine.length ? mine.map(r => `
+    <article class="req">
+      <header><span class="pill ${r.status}">${STATUS_LABEL[r.status]}</span>${r.urgent ? '<span class="pill urgent">Urgent</span>' : ""}${r.example ? '<span class="pill ex">Example</span>' : ""}<span>sent ${ago(r.createdAt)}</span></header>
+      <ul>${r.items.map(l => `<li>${l.qty} × ${esc(l.name)}</li>`).join("")}</ul>
+    </article>`).join("") : `<div class="empty">No requests from Hook ${ui.hook} yet.</div>`;
+}
+
+/* ---------- logistics ---------- */
+function setLview(v) { ui.lview = v; ls.set("hookrun.lview", v); renderLogistics(); }
+$("lv-hooks").onclick = () => setLview("hooks");
+$("lv-pick").onclick = () => setLview("pick");
+$("status-seg").addEventListener("click", e => { const b = e.target.closest("button[data-st]"); if (!b) return; ui.status = b.dataset.st; renderLogistics(); });
+
+function pickLines(reqs) {
+  const map = new Map();
+  for (const r of reqs) for (const l of r.items) {
+    const k = l.sku;
+    if (!map.has(k)) map.set(k, { sku: l.sku, name: l.name, bin: l.bin || (BY_SKU.get(l.sku) || {}).bin || "?", qty: 0, hooks: new Map(), urgent: false });
+    const e = map.get(k); e.qty += l.qty; e.hooks.set(r.hook, (e.hooks.get(r.hook) || 0) + l.qty); if (r.urgent) { e.urgent = true; e.urgentHooks = (e.urgentHooks || new Set()).add(r.hook); }
+  }
+  return [...map.values()].sort((a, b) => a.bin.localeCompare(b.bin));
+}
+
+function byHook(reqs) {
+  const g = new Map();
+  for (const r of reqs) { if (!g.has(r.hook)) g.set(r.hook, []); g.get(r.hook).push(r); }
+  return [...g.entries()].map(([hook, rs]) => {
+    const items = new Map();
+    for (const r of rs) for (const l of r.items) { const e = items.get(l.sku) || { ...l, qty: 0 }; e.qty += l.qty; items.set(l.sku, e); }
+    return { hook, rs, items: [...items.values()].sort((a, b) => (a.bin || "").localeCompare(b.bin || "")), urgent: rs.some(r => r.urgent), oldest: Math.min(...rs.map(r => r.createdAt)) };
+  }).sort((a, b) => (b.urgent - a.urgent) || (a.oldest - b.oldest));
+}
+
+function renderLogistics() {
+  const all = store.requests;
+  const open = all.filter(r => r.status === "open");
+  const counts = { open: open.length, picked: all.filter(r => r.status === "picked").length, delivered: all.filter(r => r.status === "delivered").length };
+  const parts = open.reduce((s, r) => s + r.items.reduce((t, l) => t + l.qty, 0), 0);
+  const hooksWaiting = new Set(open.map(r => r.hook)).size;
+  const urgent = open.filter(r => r.urgent).length;
+  const oldest = open.length ? Math.min(...open.map(r => r.createdAt)) : null;
+  $("kpis").innerHTML = `
+    <div class="kpi"><b>${hooksWaiting}</b><span>hooks waiting for parts</span></div>
+    <div class="kpi"><b>${parts}</b><span>parts to pick</span></div>
+    <div class="kpi ${urgent ? "alert" : ""}"><b>${urgent}</b><span>urgent requests</span></div>
+    <div class="kpi"><b>${oldest ? ago(oldest).replace(" ago", "") : "–"}</b><span>oldest open request</span></div>`;
+
+  $("lv-hooks").setAttribute("aria-pressed", ui.lview === "hooks");
+  $("lv-pick").setAttribute("aria-pressed", ui.lview === "pick");
+  const seg = $("status-seg"); seg.hidden = ui.lview === "pick";
+  seg.querySelectorAll("button").forEach(b => { b.setAttribute("aria-pressed", b.dataset.st === ui.status); b.querySelector(".n").textContent = counts[b.dataset.st]; });
+
+  const el = $("logi");
+  if (ui.lview === "pick") {
+    const lines = pickLines(open);
+    if (!lines.length) { el.innerHTML = `<div class="empty">Nothing to pick. New requests from the workshop show up here straight away.</div>`; return; }
+    let aisle = "", rows = "";
+    for (const l of lines) {
+      const a = l.bin.charAt(0);
+      if (a !== aisle) { aisle = a; rows += `<tr class="aisle"><td colspan="6">${esc(AISLES[a] || "Aisle " + a)}</td></tr>`; }
+      const done = ui.ticked.has(l.sku);
+      const hookChips = [...l.hooks.entries()].sort((x, y) => x[0] - y[0]).map(([h, q]) => `<span class="${l.urgentHooks && l.urgentHooks.has(h) ? "u" : ""}">Hook ${h} ×${q}</span>`).join("");
+      rows += `<tr class="${done ? "done" : ""}">
+        <td><input type="checkbox" data-tick="${l.sku}" ${done ? "checked" : ""} aria-label="Picked ${esc(l.name)}"></td>
+        <td><span class="bin">${l.bin}</span></td>
+        <td class="mono">${l.sku}</td>
+        <td class="pn">${esc(l.name)}</td>
+        <td class="q">${l.qty}</td>
+        <td><div class="chips">${hookChips}</div></td></tr>`;
+    }
+    const tickedN = lines.filter(l => ui.ticked.has(l.sku)).length;
+    el.innerHTML = `
+      <div style="display:grid; gap:12px">
+        <div class="toolbar">
+          <span style="color:var(--muted); font-size:14px">${lines.length} lines from ${open.length} request${open.length > 1 ? "s" : ""}, walking order by shelf. ${tickedN}/${lines.length} picked.</span>
+          <span style="display:flex; gap:8px; flex-wrap:wrap">
+            <button type="button" class="btn ghost" id="dl-pick">${window.claude && window.claude.use ? "Download printable pick list" : "Print pick list"}</button>
+            <button type="button" class="btn dark" id="all-picked">Mark all as picked</button>
+          </span>
+        </div>
+        <div class="tablewrap"><table class="pick">
+          <thead><tr><th></th><th>Shelf</th><th>SKU</th><th>Part</th><th style="text-align:right">Qty</th><th>Deliver to</th></tr></thead>
+          <tbody>${rows}</tbody></table></div>
+      </div>`;
+    el.querySelectorAll("[data-tick]").forEach(cb => cb.onchange = () => { cb.checked ? ui.ticked.add(cb.dataset.tick) : ui.ticked.delete(cb.dataset.tick); renderLogistics(); });
+    $("all-picked").onclick = async () => { const now = Date.now(); for (const r of open) await store.update(r.id, { status: "picked", pickedAt: now }); ui.ticked.clear(); toast(`${open.length} request${open.length > 1 ? "s" : ""} marked as picked`); render(); };
+    $("dl-pick").onclick = () => downloadPickList(lines, open);
+    return;
+  }
+
+  const groups = byHook(all.filter(r => r.status === ui.status).filter(r => ui.status !== "delivered" || Date.now() - (r.deliveredAt || 0) < 7 * 864e5));
+  if (!groups.length) {
+    el.innerHTML = `<div class="empty">${ui.status === "open" ? "No hooks waiting. New requests from the workshop show up here straight away." : ui.status === "picked" ? "Nothing picked yet." : "Nothing delivered in the last 7 days."}</div>`;
+    return;
+  }
+  const action = { open: ["Mark picked", "picked", "pickedAt"], picked: ["Mark delivered", "delivered", "deliveredAt"] }[ui.status];
+  el.innerHTML = `<div class="hooks">` + groups.map(g => `
+    <article class="hookcard ${g.urgent && ui.status !== "delivered" ? "is-urgent" : ""}">
+      <div class="hookhead">
+        <span class="hooknum">${g.hook}</span>
+        <div class="hookmeta"><b>Hook ${g.hook}</b>${g.rs.length} request${g.rs.length > 1 ? "s" : ""} · ${ui.status === "delivered" ? "delivered " + clock(Math.max(...g.rs.map(r => r.deliveredAt || 0))) : "since " + ago(g.oldest)}</div>
+        ${g.urgent && ui.status !== "delivered" ? '<span class="pill urgent">Urgent</span>' : ""}
+        ${g.rs.every(r => r.example) ? '<span class="pill ex">Example</span>' : ""}
+      </div>
+      <table class="lines"><tbody>${g.items.map(l => `<tr><td class="s mono">${esc(l.bin || "")}</td><td>${esc(l.name)}<div class="s mono">${l.sku}</div></td><td class="q">× ${l.qty}</td></tr>`).join("")}</tbody></table>
+      ${g.rs.filter(r => r.note).map(r => `<p class="note">“${esc(r.note)}”</p>`).join("")}
+      ${action ? `<div class="hookfoot"><button type="button" class="btn ${ui.status === "open" ? "dark" : "primary"} small" data-act="${g.hook}">${action[0]}</button></div>` : ""}
+    </article>`).join("") + `</div>`;
+  el.querySelectorAll("[data-act]").forEach(b => b.onclick = async () => {
+    const hook = +b.dataset.act, now = Date.now(); b.disabled = true;
+    const rs = all.filter(r => r.hook === hook && r.status === ui.status);
+    for (const r of rs) await store.update(r.id, { status: action[1], [action[2]]: now });
+    toast(`Hook ${hook} ${action[1] === "picked" ? "marked as picked" : "delivered"}`);
+    render();
+  });
+}
+
+/* Printable pick list: a standalone page that opens the print dialog itself */
+async function downloadPickList(lines, open) {
+  const when = new Date();
+  const stamp = when.toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  const rows = lines.map(l => `<tr><td class="b">☐</td><td class="m">${esc(l.bin)}</td><td class="m">${l.sku}</td><td>${esc(l.name)}</td><td class="q">${l.qty}</td><td>${[...l.hooks.entries()].sort((a, b) => a[0] - b[0]).map(([h, q]) => `H${h}×${q}${l.urgentHooks && l.urgentHooks.has(h) ? "!" : ""}`).join(", ")}</td></tr>`).join("");
+  const perHook = byHook(open).map(g => `<section><h3>Hook ${g.hook}${g.urgent ? " · URGENT" : ""}</h3><ul>${g.items.map(l => `<li>${l.qty} × ${esc(l.name)} <span class="m">(${l.sku})</span></li>`).join("")}</ul>${g.rs.filter(r => r.note).map(r => `<p>Note: ${esc(r.note)}</p>`).join("")}</section>`).join("");
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Pick list ${esc(stamp)}</title><style>
+    body{font:13px/1.4 Arial,sans-serif;margin:24px;color:#000}h1{font-size:20px;margin:0}h2{font-size:15px;margin:22px 0 6px}h3{font-size:13px;margin:0 0 4px}
+    table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #999;padding:6px;text-align:left;vertical-align:top}th{border-bottom:2px solid #000;font-size:11px;text-transform:uppercase}
+    .m{font-family:Consolas,monospace}.q{text-align:right;font-weight:bold;font-size:16px}.b{font-size:18px;width:24px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}section{border:1px solid #000;padding:8px;break-inside:avoid}ul{margin:0;padding-left:16px}p{margin:4px 0 0;font-style:italic}
+    .meta{color:#444;margin:4px 0 12px}@media print{body{margin:10mm}}
+  </style></head><body onload="setTimeout(function(){window.print()},300)">
+  <h1>Pick list</h1><div class="meta">${esc(stamp)} · ${open.length} requests · ${new Set(open.map(r => r.hook)).size} hooks · ${lines.reduce((s, l) => s + l.qty, 0)} parts · sorted by shelf. "!" = urgent</div>
+  <table><thead><tr><th></th><th>Shelf</th><th>SKU</th><th>Part</th><th style="text-align:right">Qty</th><th>Deliver to</th></tr></thead><tbody>${rows}</tbody></table>
+  <h2>Delivery slips per hook</h2><div class="grid">${perHook}</div></body></html>`;
+  const fname = `pick-list-${when.toISOString().slice(0, 16).replace(/[T:]/g, "-")}.html`;
+  if (!(window.claude && window.claude.use)) {
+    /* Standalone (own server / GitHub Pages): print straight from a hidden frame */
+    const f = document.createElement("iframe");
+    f.setAttribute("aria-hidden", "true");
+    f.style.cssText = "position:fixed;width:0;height:0;border:0;right:0;bottom:0";
+    f.srcdoc = html.replace(' onload="setTimeout(function(){window.print()},300)"', "");
+    f.onload = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch { toast("Printing isn't available in this browser."); } setTimeout(() => f.remove(), 60000); };
+    document.body.appendChild(f);
+    return;
+  }
+  try {
+    const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+    if (dl) { await dl.save({ filename: fname, data: html }); toast("Pick list saved. Open it to print."); return; }
+  } catch (e) { if (e && e.code === "declined") return; }
+  const text = lines.map(l => `${l.bin}\t${l.sku}\t${l.qty}x\t${l.name}\t${[...l.hooks.keys()].map(h => "Hook " + h).join(", ")}`).join("\n");
+  try { await navigator.clipboard.writeText(text); toast("Downloads aren't available here, so the pick list was copied as text."); }
+  catch { toast("Downloads aren't available in this view."); }
+}
+
+/* ---------- render ---------- */
+function render() {
+  const m = $("mode");
+  m.className = "mode " + (store.mode === "live" ? "live" : "local");
+  m.textContent = store.mode === "live" ? "Live · shared" : store.mode === "local" ? "Demo · this browser" : "Connecting…";
+  m.title = store.mode === "live" ? "Requests are shared: everyone with this page sees them update live." : store.mode === "local" ? "Demo mode: requests are kept in this browser. Try both tabs to see the full flow." : "";
+  $("reset-wrap").hidden = store.mode !== "local";
+  renderWorkshop();
+  renderLogistics();
+}
+$("reset").onclick = () => { ls.del(LS_KEY); store.requests = exampleRequests(); store.saveLocal(); ui.ticked.clear(); render(); toast("Demo data reset"); };
+setInterval(() => { if (!document.hidden) { renderWorkshop(); if (!$("view-logistics").hidden && ui.lview === "hooks") renderLogistics(); } }, 60000);
+
+route();
+render();
+connect();
+})();
+</script>
+
+</body>
+</html>

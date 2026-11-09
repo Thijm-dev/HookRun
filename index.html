@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
@@ -11,60 +12,54 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-/* Layout: workshop-floor tool. Sticky header with two stations (Workshop / Logistics), one working panel below; steel neutrals, signal-yellow for action. */
+/* Layout: workshop-floor tool. White header with a blue-tyre mark, two stations (Workshop / Logistics), one working panel below.
+   Single light theme on purpose: light blue and white, navy for text. */
 :root {
-  --bg: #EDF0F2;
+  --bg: #F2F8FC;
   --surface: #FFFFFF;
-  --sunk: #E3E7EA;
-  --ink: #161A1E;
-  --muted: #5A6570;
-  --line: #D3D9DE;
-  --signal: #F2B705;
-  --signal-ink: #161A1E;
-  --go: #1D7A4C;
-  --go-soft: #DDF0E5;
-  --urgent: #BF3418;
-  --urgent-soft: #F9E1DA;
-  --info: #2A5A86;
-  --info-soft: #DEE8F2;
+  --sunk: #E6F2FA;
+  --ink: #10294A;
+  --muted: #5B7088;
+  --line: #CFE3F1;
+  --signal: #1E9FDB;
+  --signal-ink: #FFFFFF;
+  --signal-deep: #127CB0;
+  --go: #1B7F55;
+  --go-soft: #DDF3E8;
+  --urgent: #C0392B;
+  --urgent-soft: #FBE4E1;
+  --info: #127CB0;
+  --info-soft: #DDF0FA;
   --display: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
   --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #111417; --surface: #1A1F24; --sunk: #232A30; --ink: #E7EBEE; --muted: #94A1AC; --line: #2D353C;
-    --signal: #F2B705; --signal-ink: #161A1E; --go: #43B97C; --go-soft: #173325; --urgent: #F06A4C; --urgent-soft: #3A1E17;
-    --info: #86B4DF; --info-soft: #1B2A38; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #111417; --surface: #1A1F24; --sunk: #232A30; --ink: #E7EBEE; --muted: #94A1AC; --line: #2D353C;
-  --signal: #F2B705; --signal-ink: #161A1E; --go: #43B97C; --go-soft: #173325; --urgent: #F06A4C; --urgent-soft: #3A1E17;
-  --info: #86B4DF; --info-soft: #1B2A38; color-scheme: dark;
+  color-scheme: light;
 }
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
-body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 3px solid var(--signal); outline-offset: 2px; }
 .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
 /* Header */
-.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--ink); color: var(--bg); }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); color: var(--ink); border-bottom: 4px solid var(--signal); }
 .top-inner { max-width: 1180px; margin: 0 auto; padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
+.brand { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+.tyre { width: 34px; height: 34px; flex: none; }
+.tyre .spin { transform-origin: 20px 20px; }
+@media (prefers-reduced-motion: no-preference) { .brand:hover .tyre .spin { animation: roll 1.2s linear infinite; } @keyframes roll { to { transform: rotate(360deg); } } }
 .brand b { font-family: var(--display); font-size: 26px; letter-spacing: .02em; text-transform: uppercase; line-height: 1; }
 .brand b i { font-style: normal; color: var(--signal); }
-.brand span { font-size: 13px; opacity: .7; }
-.tabs { display: flex; gap: 4px; background: rgba(255,255,255,.08); padding: 4px; border-radius: 8px; }
-.tabs a { color: inherit; text-decoration: none; font-family: var(--display); font-size: 18px; letter-spacing: .04em; text-transform: uppercase; padding: 4px 14px; border-radius: 6px; }
+.brand span { font-size: 13px; color: var(--muted); }
+.tabs { display: flex; gap: 4px; background: var(--sunk); padding: 4px; border-radius: 999px; }
+.tabs a { color: var(--ink); text-decoration: none; font-family: var(--display); font-size: 18px; letter-spacing: .04em; text-transform: uppercase; padding: 4px 16px; border-radius: 999px; }
 .tabs a[aria-current="page"] { background: var(--signal); color: var(--signal-ink); }
-.mode { font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1px solid rgba(255,255,255,.25); white-space: nowrap; }
+.mode { font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; color: var(--muted); }
 .mode::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: currentColor; vertical-align: 1px; }
-.mode.live { color: #6FDCA0; }
-.mode.local { color: #F2C94C; }
+.mode.live { color: var(--go); }
+.mode.local { color: var(--signal-deep); }
 
 .wrap { max-width: 1180px; margin: 0 auto; padding-block: 20px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 20px; }
 
@@ -89,13 +84,13 @@ label.lbl { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-trans
 
 .hookrow { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
 .hookpick { position: relative; display: inline-block; }
-.hookin { appearance: none; -webkit-appearance: none; width: 190px; height: 52px; border: 2px solid var(--ink); border-radius: 8px; background: var(--surface); color: var(--ink); font-family: var(--display); font-size: 28px; font-weight: 700; letter-spacing: .02em; padding: 0 44px 0 14px; cursor: pointer; }
+.hookin { appearance: none; -webkit-appearance: none; width: 190px; height: 52px; border: 2px solid var(--signal); border-radius: 8px; background: var(--surface); color: var(--ink); font-family: var(--display); font-size: 28px; font-weight: 700; letter-spacing: .02em; padding: 0 44px 0 14px; cursor: pointer; }
 .hookin:focus { outline: none; border-color: var(--signal); box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal) 35%, transparent); }
 .hookin option { font-family: var(--body); font-size: 16px; font-weight: 400; background: var(--surface); color: var(--ink); }
 .chev { position: absolute; right: 16px; top: 50%; width: 14px; height: 10px; transform: translateY(-50%); pointer-events: none; color: var(--ink); }
 
 .scanbox { position: relative; }
-.scan { width: 100%; height: 56px; border: 2px solid var(--ink); border-radius: 8px; background: var(--surface); padding: 0 14px 0 46px; font-size: 18px; }
+.scan { width: 100%; height: 56px; border: 2px solid var(--signal); border-radius: 8px; background: var(--surface); padding: 0 14px 0 46px; font-size: 18px; }
 .scan:focus { border-color: var(--signal); box-shadow: 0 0 0 3px color-mix(in srgb, var(--signal) 35%, transparent); outline: none; }
 .scanicon { position: absolute; left: 14px; top: 17px; width: 20px; height: 22px; pointer-events: none; color: var(--muted); }
 .suggest { position: absolute; left: 0; right: 0; top: 60px; z-index: 4; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.15); margin: 0; padding: 4px; list-style: none; max-height: 280px; overflow: auto; }
@@ -136,7 +131,7 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; paddi
 /* Status pills */
 .pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
 .pill.open { background: var(--info-soft); color: var(--info); }
-.pill.picked { background: color-mix(in srgb, var(--signal) 28%, var(--surface)); color: var(--ink); }
+.pill.picked { background: #FFF1D6; color: #8A5A00; }
 .pill.delivered { background: var(--go-soft); color: var(--go); }
 .pill.ex { background: var(--sunk); color: var(--muted); font-weight: 500; }
 
@@ -161,11 +156,11 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; paddi
 .pick tbody tr[data-key]:hover td { background: var(--sunk); }
 .progress { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
 .bar { width: 160px; height: 8px; background: var(--sunk); border-radius: 4px; overflow: hidden; }
-.bar i { display: block; height: 100%; background: var(--go); }
+.bar i { display: block; height: 100%; background: var(--signal); }
 .hooks { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
 .hookcard { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: grid; min-width: 0; }
 .hookhead { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
-.hooknum { font-family: var(--display); font-size: 30px; font-weight: 700; line-height: 1; background: var(--ink); color: var(--bg); border-radius: 6px; padding: 4px 9px 2px; }
+.hooknum { font-family: var(--display); font-size: 30px; font-weight: 700; line-height: 1; background: var(--signal); color: var(--signal-ink); border-radius: 6px; padding: 4px 9px 2px; }
 .hookmeta { font-size: 12px; color: var(--muted); line-height: 1.35; margin-right: auto; }
 .hookmeta b { color: var(--ink); font-size: 14px; display: block; }
 .lines { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -188,7 +183,7 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; paddi
 .pick input { width: 22px; height: 22px; accent-color: var(--go); }
 .aisle td { background: var(--sunk); font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 5px 12px; }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; }
-.chips span { font-size: 12px; background: var(--ink); color: var(--bg); border-radius: 4px; padding: 0 6px; white-space: nowrap; }
+.chips span { font-size: 12px; background: var(--info-soft); color: var(--signal-deep); font-weight: 600; border-radius: 4px; padding: 0 6px; white-space: nowrap; }
 
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 8px; font-weight: 500; z-index: 20; max-width: calc(100% - 32px); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
 .foot { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; }
@@ -210,7 +205,17 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; paddi
 
 <header class="top">
   <div class="top-inner">
-    <div class="brand"><b>Hook<i>Run</i></b><span>workshop parts requests</span></div>
+    <div class="brand">
+      <svg class="tyre" viewBox="0 0 40 40" aria-hidden="true">
+        <circle cx="20" cy="20" r="16.5" fill="none" stroke="var(--signal)" stroke-width="6"/>
+        <circle cx="20" cy="20" r="12.5" fill="none" stroke="var(--muted)" stroke-width="1.5"/>
+        <g class="spin" stroke="var(--muted)" stroke-width="1" stroke-linecap="round">
+          <line x1="20" y1="8" x2="20" y2="32"/><line x1="8" y1="20" x2="32" y2="20"/>
+          <line x1="11.5" y1="11.5" x2="28.5" y2="28.5"/><line x1="28.5" y1="11.5" x2="11.5" y2="28.5"/>
+        </g>
+        <circle cx="20" cy="20" r="2.6" fill="var(--ink)"/>
+      </svg>
+      <b>Hook<i>Run</i></b><span>workshop parts requests</span></div>
     <nav class="tabs" aria-label="Station">
       <a href="#workshop" id="tab-workshop">Workshop</a>
       <a href="#logistics" id="tab-logistics">Logistics</a>

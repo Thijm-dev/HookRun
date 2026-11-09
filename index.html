@@ -573,7 +573,10 @@ function pickLines(reqs) {
     map.get(l.sku).hookSet.add(r.hook);
   }
   /* "hooks" = how many hooks asked for this part; logistics turns that into an amount using the box size they know */
-  return [...map.values()].map(l => ({ sku: l.sku, name: l.name, bin: l.bin, hooks: l.hookSet.size, key: l.sku + ":" + l.hookSet.size })).sort((a, b) => a.bin.localeCompare(b.bin));
+  return [...map.values()].map(l => {
+    const hookList = [...l.hookSet].sort((a, b) => a - b);
+    return { sku: l.sku, name: l.name, bin: l.bin, hooks: hookList.length, hookList, key: l.sku + ":" + hookList.join(",") };
+  }).sort((a, b) => a.bin.localeCompare(b.bin));
 }
 
 function byHook(reqs) {
@@ -621,14 +624,15 @@ function renderLogistics() {
     let aisle = "", rows = "";
     for (const l of lines) {
       const a = l.bin.charAt(0);
-      if (a !== aisle) { aisle = a; rows += `<tr class="aisle"><td colspan="5">${esc(AISLES[a] || "Aisle " + a)}</td></tr>`; }
+      if (a !== aisle) { aisle = a; rows += `<tr class="aisle"><td colspan="6">${esc(AISLES[a] || "Aisle " + a)}</td></tr>`; }
       const ok = ui.ticked.has(l.key);
       rows += `<tr data-key="${l.key}" class="${ok ? "done" : ""}">
         <td><input type="checkbox" ${ok ? "checked" : ""} aria-label="Picked ${esc(l.name)}"></td>
         <td><span class="bin">${l.bin}</span></td>
         <td class="mono">${l.sku}</td>
         <td class="pn">${esc(l.name)}</td>
-        <td class="q">${l.hooks}<small>${l.hooks > 1 ? "hooks" : "hook"}</small></td></tr>`;
+        <td class="q">${l.hooks}<small>${l.hooks > 1 ? "hooks" : "hook"}</small></td>
+        <td><div class="chips">${l.hookList.map(h => `<span>Hook ${h}</span>`).join("")}</div></td></tr>`;
     }
     const tickedN = lines.filter(l => ui.ticked.has(l.key)).length;
     const keyOf = new Map(lines.map(l => [l.sku, l.key]));
@@ -640,7 +644,7 @@ function renderLogistics() {
           <button type="button" class="btn ${ready.length === open.length ? "primary" : "dark"}" id="to-deliver" ${ready.length ? "" : "disabled"}>${ready.length ? `Done picking: move ${ready.length} request${ready.length > 1 ? "s" : ""} to Deliver` : "Tick parts as you pick them"}</button>
         </div>
         <div class="tablewrap"><table class="pick">
-          <thead><tr><th></th><th>Shelf</th><th>SKU</th><th>Part</th><th style="text-align:right">Requested by</th></tr></thead>
+          <thead><tr><th></th><th>Shelf</th><th>SKU</th><th>Part</th><th style="text-align:right">Requested by</th><th>Hooks</th></tr></thead>
           <tbody>${rows}</tbody></table></div>
       </div>`;
     el.querySelector("tbody").addEventListener("click", e => {
@@ -711,13 +715,13 @@ function printPickList(lines, open) {
   let aisle = "", rows = "";
   for (const l of lines) {
     const a = l.bin.charAt(0);
-    if (a !== aisle) { aisle = a; rows += `<tr class="aisle"><td colspan="5">${esc(AISLES[a] || "Aisle " + a)}</td></tr>`; }
-    rows += `<tr><td class="b">☐</td><td class="m">${esc(l.bin)}</td><td class="m">${l.sku}</td><td>${esc(l.name)}</td><td class="q">${l.hooks} <small>${l.hooks > 1 ? "hooks" : "hook"}</small></td></tr>`;
+    if (a !== aisle) { aisle = a; rows += `<tr class="aisle"><td colspan="6">${esc(AISLES[a] || "Aisle " + a)}</td></tr>`; }
+    rows += `<tr><td class="b">☐</td><td class="m">${esc(l.bin)}</td><td class="m">${l.sku}</td><td>${esc(l.name)}</td><td class="q">${l.hooks} <small>${l.hooks > 1 ? "hooks" : "hook"}</small></td><td>${l.hookList.join(", ")}</td></tr>`;
   }
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>Pick list ${esc(stamp)}</title><style>${PRINT_CSS}</style></head><body>
   <h1>Pick list</h1><div class="meta">${esc(stamp)} · ${lines.length} different parts · ${new Set(open.map(r => r.hook)).size} hooks · sorted by shelf</div>
-  <table><thead><tr><th></th><th>Shelf</th><th>SKU</th><th>Part</th><th style="text-align:right">Requested by</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
-  const text = lines.map(l => `${l.bin}\t${l.sku}\t${l.hooks} hook(s)\t${l.name}`).join("\n");
+  <table><thead><tr><th></th><th>Shelf</th><th>SKU</th><th>Part</th><th style="text-align:right">Requested by</th><th>Hooks</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+  const text = lines.map(l => `${l.bin}\t${l.sku}\t${l.hooks} hook(s): ${l.hookList.join(", ")}\t${l.name}`).join("\n");
   return outputPrintable(html, `pick-list-${fileStamp()}.html`, text);
 }
 

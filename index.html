@@ -609,7 +609,7 @@ function renderLogistics() {
     <div class="kpi"><b>${deliveredToday}</b><span>requests delivered today</span></div>
     <div class="kpi"><b>${oldest ? ago(oldest).replace(" ago", "") : "–"}</b><span>oldest request not picked</span></div>`;
 
-  const counts = { pick: parts ? parts + " parts" : "", deliver: deliverHooks ? deliverHooks + " hooks" : "", done: "" };
+  const counts = { pick: parts ? parts + (parts > 1 ? " parts" : " part") : "", deliver: deliverHooks ? deliverHooks + (deliverHooks > 1 ? " hooks" : " hook") : "", done: "" };
   $("stage-seg").querySelectorAll("button").forEach(b => { b.setAttribute("aria-pressed", b.dataset.stage === ui.stage); b.querySelector(".n").textContent = counts[b.dataset.stage]; });
   const pa = $("print-all");
   pa.textContent = ui.stage === "pick" ? "Print pick list" : ui.stage === "deliver" ? "Print all hook lists" : "Print delivered lists";

@@ -118,7 +118,7 @@ label.lbl { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-trans
 
 /* Basket */
 .basket { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-.bline { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--line); }
+.bline { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--line); }
 .bline:first-child { border-top: 0; }
 .bline .nm { min-width: 0; }
 .bline .nm div { font-weight: 500; }
@@ -183,7 +183,8 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; paddi
 .pick tr.done td { opacity: .45; }
 .pick tr.done .pn { text-decoration: line-through; }
 .pick .bin { font-family: var(--mono); font-weight: 500; background: var(--sunk); border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
-.pick .q { text-align: right; font-family: var(--display); font-size: 22px; font-weight: 700; }
+.pick .q { text-align: right; font-family: var(--display); font-size: 22px; font-weight: 700; white-space: nowrap; }
+.pick .q small { font-family: var(--body); font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 5px; }
 .pick input { width: 22px; height: 22px; accent-color: var(--go); }
 .aisle td { background: var(--sunk); font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 5px 12px; }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -450,12 +451,13 @@ $("hook-in").addEventListener("change", () => {
   $("scan").focus();
 });
 
+/* A request means "my box for this part is running low". Logistics knows the box sizes, so no quantities. */
 function addPart(p, how) {
-  const line = ui.basket.find(l => l.sku === p.sku);
-  if (line) line.qty++; else ui.basket.push({ sku: p.sku, name: p.name, bin: p.bin, qty: 1 });
-  const q = ui.basket.find(l => l.sku === p.sku).qty;
-  const fb = $("feedback"); fb.className = "feedback ok";
-  fb.textContent = (how === "scan" ? "Scanned: " : "Added: ") + p.name + (q > 1 ? "  ×" + q : "");
+  const fb = $("feedback");
+  if (ui.basket.some(l => l.sku === p.sku)) { fb.className = "feedback"; fb.textContent = p.name + " is already on your list."; return; }
+  ui.basket.push({ sku: p.sku, name: p.name, bin: p.bin, qty: 1 });
+  fb.className = "feedback ok";
+  fb.textContent = (how === "scan" ? "Scanned: " : "Added: ") + p.name;
   renderBasket();
 }
 function findMatches(q) {
@@ -516,27 +518,24 @@ function renderBasket() {
     el.innerHTML = `<div class="basket">` + ui.basket.map((l, i) => `
       <div class="bline">
         <div class="nm"><div>${esc(l.name)}</div><small class="mono">${l.sku} · shelf ${l.bin}</small></div>
-        <div class="qty"><button type="button" data-dec="${i}" aria-label="One less">−</button><span>${l.qty}</span><button type="button" data-inc="${i}" aria-label="One more">+</button></div>
         <button type="button" class="x" data-del="${i}" aria-label="Remove ${esc(l.name)}">×</button>
       </div>`).join("") + `</div>`;
   }
-  const total = ui.basket.reduce((s, l) => s + l.qty, 0);
+  const total = ui.basket.length;
   const send = $("send");
   send.disabled = !ui.basket.length || !ui.hook || store.mode === "connecting";
   send.textContent = total ? `Send ${total} part${total > 1 ? "s" : ""} to logistics` : "Send to logistics";
 }
 $("basket").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
-  if (b.dataset.inc) ui.basket[+b.dataset.inc].qty++;
-  else if (b.dataset.dec) { const l = ui.basket[+b.dataset.dec]; l.qty--; if (l.qty < 1) ui.basket.splice(+b.dataset.dec, 1); }
-  else if (b.dataset.del) ui.basket.splice(+b.dataset.del, 1);
+  if (b.dataset.del) ui.basket.splice(+b.dataset.del, 1);
   renderBasket();
 });
 
 $("send").onclick = async () => {
   if (!ui.basket.length || !ui.hook) return;
   const req = { hook: ui.hook, items: ui.basket.map(l => ({ ...l })), note: $("note").value.trim().slice(0, 300), status: "open", createdAt: Date.now() };
-  const n = req.items.reduce((s, l) => s + l.qty, 0);
+  const n = req.items.length;
   $("send").disabled = true;
   try {
     await store.add(req);
@@ -557,7 +556,7 @@ function renderWorkshop() {
   $("mine").innerHTML = mine.length ? mine.map(r => `
     <article class="req">
       <header><span class="pill ${r.status}">${STATUS_LABEL[r.status]}</span>${r.example ? '<span class="pill ex">Example</span>' : ""}<span>sent ${ago(r.createdAt)}</span></header>
-      <ul>${r.items.map(l => `<li>${l.qty} × ${esc(l.name)}</li>`).join("")}</ul>
+      <ul>${r.items.map(l => `<li>${esc(l.name)}</li>`).join("")}</ul>
     </article>`).join("") : `<div class="empty">No requests from Hook ${ui.hook} yet.</div>`;
 }
 
@@ -570,10 +569,11 @@ $("print-all").onclick = () => printStage();
 function pickLines(reqs) {
   const map = new Map();
   for (const r of reqs) for (const l of r.items) {
-    if (!map.has(l.sku)) map.set(l.sku, { sku: l.sku, name: l.name, bin: l.bin || (BY_SKU.get(l.sku) || {}).bin || "?", qty: 0 });
-    map.get(l.sku).qty += l.qty;
+    if (!map.has(l.sku)) map.set(l.sku, { sku: l.sku, name: l.name, bin: l.bin || (BY_SKU.get(l.sku) || {}).bin || "?", hookSet: new Set() });
+    map.get(l.sku).hookSet.add(r.hook);
   }
-  return [...map.values()].map(l => ({ ...l, key: l.sku + ":" + l.qty })).sort((a, b) => a.bin.localeCompare(b.bin));
+  /* "hooks" = how many hooks asked for this part; logistics turns that into an amount using the box size they know */
+  return [...map.values()].map(l => ({ sku: l.sku, name: l.name, bin: l.bin, hooks: l.hookSet.size, key: l.sku + ":" + l.hookSet.size })).sort((a, b) => a.bin.localeCompare(b.bin));
 }
 
 function byHook(reqs) {
@@ -581,7 +581,7 @@ function byHook(reqs) {
   for (const r of reqs) { if (!g.has(r.hook)) g.set(r.hook, []); g.get(r.hook).push(r); }
   return [...g.entries()].map(([hook, rs]) => {
     const items = new Map();
-    for (const r of rs) for (const l of r.items) { const e = items.get(l.sku) || { ...l, qty: 0 }; e.qty += l.qty; items.set(l.sku, e); }
+    for (const r of rs) for (const l of r.items) if (!items.has(l.sku)) items.set(l.sku, { ...l });
     return { hook, rs, items: [...items.values()].sort((a, b) => (a.bin || "").localeCompare(b.bin || "")), oldest: Math.min(...rs.map(r => r.createdAt)) };
   }).sort((a, b) => a.hook - b.hook);
 }
@@ -598,13 +598,13 @@ const stageReqs = () => {
 function renderLogistics() {
   const { open, picked, done } = stageReqs();
   const lines = pickLines(open);
-  const parts = lines.reduce((s, l) => s + l.qty, 0);
+  const parts = lines.length;
   const deliverHooks = new Set(picked.map(r => r.hook)).size;
   const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
   const deliveredToday = done.filter(r => r.deliveredAt >= startOfDay.getTime()).length;
   const oldest = open.length ? Math.min(...open.map(r => r.createdAt)) : null;
   $("kpis").innerHTML = `
-    <div class="kpi"><b>${parts}</b><span>parts to pick</span></div>
+    <div class="kpi"><b>${parts}</b><span>different parts to pick</span></div>
     <div class="kpi"><b>${deliverHooks}</b><span>hooks to deliver to</span></div>
     <div class="kpi"><b>${deliveredToday}</b><span>requests delivered today</span></div>
     <div class="kpi"><b>${oldest ? ago(oldest).replace(" ago", "") : "–"}</b><span>oldest request not picked</span></div>`;
@@ -628,7 +628,7 @@ function renderLogistics() {
         <td><span class="bin">${l.bin}</span></td>
         <td class="mono">${l.sku}</td>
         <td class="pn">${esc(l.name)}</td>
-        <td class="q">${l.qty}</td></tr>`;
+        <td class="q">${l.hooks}<small>${l.hooks > 1 ? "hooks" : "hook"}</small></td></tr>`;
     }
     const tickedN = lines.filter(l => ui.ticked.has(l.key)).length;
     const keyOf = new Map(lines.map(l => [l.sku, l.key]));
@@ -640,7 +640,7 @@ function renderLogistics() {
           <button type="button" class="btn ${ready.length === open.length ? "primary" : "dark"}" id="to-deliver" ${ready.length ? "" : "disabled"}>${ready.length ? `Done picking: move ${ready.length} request${ready.length > 1 ? "s" : ""} to Deliver` : "Tick parts as you pick them"}</button>
         </div>
         <div class="tablewrap"><table class="pick">
-          <thead><tr><th></th><th>Shelf</th><th>SKU</th><th>Part</th><th style="text-align:right">Qty</th></tr></thead>
+          <thead><tr><th></th><th>Shelf</th><th>SKU</th><th>Part</th><th style="text-align:right">Requested by</th></tr></thead>
           <tbody>${rows}</tbody></table></div>
       </div>`;
     el.querySelector("tbody").addEventListener("click", e => {
@@ -669,10 +669,10 @@ function renderLogistics() {
     <article class="hookcard">
       <div class="hookhead">
         <span class="hooknum">${g.hook}</span>
-        <div class="hookmeta"><b>Hook ${g.hook}</b>${g.items.reduce((s, l) => s + l.qty, 0)} parts · ${ui.stage === "done" ? "delivered " + clock(Math.max(...g.rs.map(r => r.deliveredAt || 0))) : "requested " + ago(g.oldest)}</div>
+        <div class="hookmeta"><b>Hook ${g.hook}</b>${g.items.length} part${g.items.length > 1 ? "s" : ""} ·${ui.stage === "done" ? "delivered " + clock(Math.max(...g.rs.map(r => r.deliveredAt || 0))) : "requested " + ago(g.oldest)}</div>
         ${g.rs.every(r => r.example) ? '<span class="pill ex">Example</span>' : ""}
       </div>
-      <table class="lines"><tbody>${g.items.map(l => `<tr><td>${esc(l.name)}<div class="s mono">${l.sku}</div></td><td class="q">× ${l.qty}</td></tr>`).join("")}</tbody></table>
+      <table class="lines"><tbody>${g.items.map(l => `<tr><td class="s mono">${l.sku}</td><td>${esc(l.name)}</td></tr>`).join("")}</tbody></table>
       ${g.rs.filter(r => r.note).map(r => `<p class="note">“${esc(r.note)}”</p>`).join("")}
       <div class="hookfoot"><button type="button" class="btn ghost small" data-print="${g.hook}" aria-label="Print list for Hook ${g.hook}">Print</button>${ui.stage === "deliver" ? `<button type="button" class="btn primary small" data-act="${g.hook}">Delivered</button>` : ""}</div>
     </article>`).join("") + `</div>`;
@@ -695,7 +695,7 @@ const PRINT_CSS = `
   body{font:13px/1.4 Arial,sans-serif;margin:24px;color:#000}h1{font-size:20px;margin:0}
   table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #999;padding:7px 6px;text-align:left;vertical-align:top}
   th{border-bottom:2px solid #000;font-size:11px;text-transform:uppercase}
-  .m{font-family:Consolas,monospace}.q{text-align:right;font-weight:bold;font-size:16px}.b{font-size:18px;width:24px}
+  .m{font-family:Consolas,monospace}.q{text-align:right;font-weight:bold;font-size:16px;white-space:nowrap}.q small{font-size:11px;font-weight:normal}.b{font-size:18px;width:24px}
   .meta{color:#444;margin:4px 0 12px}.aisle td{background:#eee;font-weight:bold;font-size:11px;text-transform:uppercase}
   .sheet{break-after:page}.sheet:last-child{break-after:auto}
   .hd{display:flex;align-items:center;gap:16px;border-bottom:3px solid #000;padding-bottom:10px;margin-bottom:12px}
@@ -712,12 +712,12 @@ function printPickList(lines, open) {
   for (const l of lines) {
     const a = l.bin.charAt(0);
     if (a !== aisle) { aisle = a; rows += `<tr class="aisle"><td colspan="5">${esc(AISLES[a] || "Aisle " + a)}</td></tr>`; }
-    rows += `<tr><td class="b">☐</td><td class="m">${esc(l.bin)}</td><td class="m">${l.sku}</td><td>${esc(l.name)}</td><td class="q">${l.qty}</td></tr>`;
+    rows += `<tr><td class="b">☐</td><td class="m">${esc(l.bin)}</td><td class="m">${l.sku}</td><td>${esc(l.name)}</td><td class="q">${l.hooks} <small>${l.hooks > 1 ? "hooks" : "hook"}</small></td></tr>`;
   }
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>Pick list ${esc(stamp)}</title><style>${PRINT_CSS}</style></head><body>
-  <h1>Pick list</h1><div class="meta">${esc(stamp)} · ${lines.length} lines · ${lines.reduce((s, l) => s + l.qty, 0)} parts · sorted by shelf</div>
-  <table><thead><tr><th></th><th>Shelf</th><th>SKU</th><th>Part</th><th style="text-align:right">Qty</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
-  const text = lines.map(l => `${l.bin}\t${l.sku}\t${l.qty}x\t${l.name}`).join("\n");
+  <h1>Pick list</h1><div class="meta">${esc(stamp)} · ${lines.length} different parts · ${new Set(open.map(r => r.hook)).size} hooks · sorted by shelf</div>
+  <table><thead><tr><th></th><th>Shelf</th><th>SKU</th><th>Part</th><th style="text-align:right">Requested by</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+  const text = lines.map(l => `${l.bin}\t${l.sku}\t${l.hooks} hook(s)\t${l.name}`).join("\n");
   return outputPrintable(html, `pick-list-${fileStamp()}.html`, text);
 }
 
@@ -725,19 +725,18 @@ function printPickList(lines, open) {
 function printHooks(groups) {
   const stamp = stampNow();
   const sheets = groups.map(g => {
-    const total = g.items.reduce((s, l) => s + l.qty, 0);
-    const rows = g.items.map(l => `<tr><td class="b">☐</td><td class="m">${l.sku}</td><td>${esc(l.name)}</td><td class="q">${l.qty}</td></tr>`).join("");
+    const rows = g.items.map(l => `<tr><td class="b">☐</td><td class="m">${l.sku}</td><td>${esc(l.name)}</td></tr>`).join("");
     const notes = g.rs.filter(r => r.note).map(r => `<li>${esc(r.note)}</li>`).join("");
     return `<section class="sheet">
-      <div class="hd"><div class="n">${g.hook}</div><div><h1>Parts for Hook ${g.hook}</h1><div class="meta">${esc(stamp)} · ${g.items.length} lines · ${total} parts</div></div></div>
-      <table><thead><tr><th></th><th>SKU</th><th>Part</th><th style="text-align:right">Qty</th></tr></thead><tbody>${rows}</tbody></table>
+      <div class="hd"><div class="n">${g.hook}</div><div><h1>Parts for Hook ${g.hook}</h1><div class="meta">${esc(stamp)} · ${g.items.length} part${g.items.length > 1 ? "s" : ""}</div></div></div>
+      <table><thead><tr><th></th><th>SKU</th><th>Part</th></tr></thead><tbody>${rows}</tbody></table>
       ${notes ? `<h3>Notes from the mechanic</h3><ul>${notes}</ul>` : ""}
       <div class="sign"><div>Picked by</div><div>Delivered by / time</div></div>
     </section>`;
   }).join("");
   const title = groups.length === 1 ? `Hook ${groups[0].hook} parts` : `Hook lists (${groups.length} hooks)`;
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title} ${esc(stamp)}</title><style>${PRINT_CSS}</style></head><body>${sheets}</body></html>`;
-  const text = groups.map(g => `Hook ${g.hook}\n` + g.items.map(l => `${l.sku}\t${l.qty}x\t${l.name}`).join("\n")).join("\n\n");
+  const text = groups.map(g => `Hook ${g.hook}\n` + g.items.map(l => `${l.sku}\t${l.name}`).join("\n")).join("\n\n");
   const fname = groups.length === 1 ? `hook-${groups[0].hook}-parts-${fileStamp()}.html` : `hook-lists-${fileStamp()}.html`;
   return outputPrintable(html, fname, text);
 }
